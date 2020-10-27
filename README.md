@@ -6,37 +6,46 @@ Memoire is a TUI program to help you archive commands (or any text).
 
 You can search archived commands by keywords in command, annotation and/or tags. The archived commands are editable and deletable. Archived commands are saved in json format for easy sharing.
 
+## Installation
+***
+Make sure you have [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed.
+
+Install with:
+```sh
+cargo install memoire
+```
+
 ## Usage
 ***
 
 ### CLI
 ***
 - Show all records:
-    ```
+    ```sh
     memoire
     ```
 - General search:
-    ```
+    ```sh
     memoire [-s|--search] <keyword_1> <keyword_2> ...
     ```
 - Search by command:
-    ```
+    ```sh
     memoire [-c|--command] <keyword_1> <keyword_2> ...
     ```
 - Search by annotation:
-    ```
+    ```sh
     memoire [-a|--annotation] <keyword_1> <keyword_2> ...
     ```
 - Search by tags:
-    ```
+    ```sh
     memoire [-t|--tags] <keyword_1> <keyword_2> ...
     ```
 - You can combine arguments:
-    ```
+    ```sh
     memoire -c <keyword_1> -t <keyword_2> ...
     ```
 - By default, search results calculate the union of search results of each keyword. For intersection add `-i`:
-    ```
+    ```sh
     memoire [-i|--intersection] -c <keyword_1> -t <keyword_2> <keyword_3> ...
     ```
 
