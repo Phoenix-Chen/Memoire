@@ -2,14 +2,12 @@ extern crate termion;
 
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Serialize, Deserialize, Hash, Eq, PartialEq, Clone)]
 pub struct Bookmark {
     command: String,
     annotation: String,
-    tags: Vec<String>
+    tags: Vec<String>,
 }
-
 
 impl Bookmark {
     /// Returns a bookmark with the command, annotation and tags given
@@ -23,7 +21,7 @@ impl Bookmark {
         Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
-            tags: tags.clone()
+            tags: tags.clone(),
         }
     }
 
@@ -51,32 +49,51 @@ impl Bookmark {
         self.tags = tags.to_vec();
     }
 
+    /// Returns a boolean indicating whether command contains given string slice
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - A string slice that holds the given keyword
     pub fn command_contains(&self, s: &str) -> bool {
         self.command.contains(s)
     }
 
+    /// Returns a boolean indicating whether annotation contains given string slice
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - A string slice that holds the given keyword
     pub fn annotation_contains(&self, s: &str) -> bool {
         self.annotation.contains(s)
     }
 
+    /// Returns a boolean indicating whether any tag contains given string slice
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - A string slice that holds the given keyword
     pub fn tags_contains(&self, s: &str) -> bool {
         for tag in self.tags.iter() {
             if tag.contains(s) {
-                return true
+                return true;
             }
         }
         false
     }
 
     pub fn to_vec(&self) -> Vec<String> {
-        vec![self.command.to_string(), self.annotation.to_string(), self.get_tags_as_string(" ")]
+        vec![
+            self.command.to_string(),
+            self.annotation.to_string(),
+            self.get_tags_as_string(" "),
+        ]
     }
 
     pub fn to_tuple_vec(&self) -> Vec<(String, String)> {
         vec![
             ("command".to_string(), self.command.to_string()),
             ("annotation".to_string(), self.annotation.to_string()),
-            ("tags".to_string(), self.get_tags_as_string(", "))
+            ("tags".to_string(), self.get_tags_as_string(", ")),
         ]
     }
 }
