@@ -37,9 +37,7 @@ impl TLDRPage {
                 return Err(tldr_page_parse_err);
             };
         }
-        if self.expecting_command {
-            return Err(TLDRPageParseError);
-        }
+        self.validate();
         Ok(())
     }
 
@@ -63,8 +61,13 @@ impl TLDRPage {
                     if self.expecting_command {
                         return Err(TLDRPageParseError);
                     }
+                    let mut example_description = (&line[1..]).trim();
+                    // remove trailing colon
+                    if let Some(':') = example_description.chars().last() {
+                        example_description = &example_description[..example_description.len() - 1];
+                    }
                     self.examples.push(
-                        ((&line[1..]).trim().to_owned(), "".to_owned())
+                        (example_description.to_owned(), "".to_owned())
                     );
                     self.expecting_command = true;
                 },
@@ -84,8 +87,28 @@ impl TLDRPage {
         Ok(())
     }
 
+    fn validate(&self) -> bool {
+        // Check if command_name is set
+        if let None = self.command_name {
+            return false;
+        }
+        if self.expecting_command {
+            return false;
+        }
+        true
+    }
+
     pub fn get_examples(&self) -> &Vec<(String, String)> {
         &self.examples
+    }
+
+    pub fn get_command_name(&self) -> &str {
+        match &self.command_name {
+            Some(command_name) => {
+                return command_name;
+            },
+            None => panic!("No command is set in TLDRPage"),
+        }
     }
 }
 
