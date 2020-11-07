@@ -12,6 +12,7 @@ pub enum Mode {
     Add(AddMode),
     Delete(usize),
     Edit(EditMode),
+    Parse(String),
     Search(SearchMode)
 }
 

@@ -1,10 +1,12 @@
 extern crate clap;
 
-use crate::{memoire, util};
+use crate::{memoire, tldr_parser, util};
 
 use clap::{Arg, App, SubCommand};
-use util::{AddMode, EditMode, Mode, SearchMode, multi_union, multi_intersection};
+use futures::executor::block_on;
 
+use tldr_parser::{download_tldr, parse_page};
+use util::{AddMode, EditMode, Mode, SearchMode, multi_union, multi_intersection};
 use memoire::{SearchResult, Memoire};
 use std::collections::HashSet;
 
@@ -65,6 +67,10 @@ impl ArgParser {
                 );
                 memoire.search(true, false, false, "")
             },
+            Some(Mode::Parse(tldr_page_path)) => {
+                update_memoire_from_tldr(memoire, tldr_page_path);
+                memoire.search(true, true, true, "")
+            },
             None => {
                 memoire.search(true, true, true, "")
             }
@@ -110,6 +116,11 @@ impl ArgParser {
                 .long("intersection")
                 .takes_value(false)
                 .help("Return search results with intersection (default union)")
+            )
+            .arg(Arg::with_name("TLDR")
+                .long("tldr")
+                .takes_value(true)
+                .help("Load from tldr-pages. (ex. pages/osx/base64)")
             )
             .subcommand(SubCommand::with_name("--add")
                 .about("Add bookmark")
@@ -234,6 +245,13 @@ impl ArgParser {
             return;
         }
 
+        // Look for tldr args
+        if matches.is_present("TLDR") {
+            let tldr_page_path = matches.value_of("TLDR").unwrap();
+            self.mode = Some(Mode::Parse(tldr_page_path.to_owned()));
+            return;
+        }
+
         // Look for search args
         let args: Vec<&str> = vec!["Search", "Annotation", "Command", "Tags"];
         let mut search_mode = SearchMode::default();
@@ -265,5 +283,21 @@ impl ArgParser {
             search_mode.set_searches(vec!["".to_owned()]);
         }
         self.mode = Some(Mode::Search(search_mode));
+    }
+}
+
+
+fn update_memoire_from_tldr(memoire: &mut Memoire, page_path: &str) {
+    if let Ok(body) = block_on(download_tldr(page_path)) {
+        if let Ok(tldr_page) = parse_page(&body) {
+            let tags = vec![tldr_page.get_command_name().to_string()];
+            for v in tldr_page.get_examples().into_iter() {
+                memoire.add_bookmark(&v.1, &v.0, &tags)
+            }
+        } else {
+            panic!("Failed to parse tldr page at: {:?}", page_path);
+        }
+    } else {
+        panic!("Failed to download tldr page at: {:?}", page_path);
     }
 }

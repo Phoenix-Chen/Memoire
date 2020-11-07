@@ -58,6 +58,22 @@ cargo install memoire
 - `Ctrl-a`: To add new record.
 - `Left` / `Right`: To move cursor in input_mode.
 
+
+### TLDR Pages Import
+***
+Too lazy to build your own archive? No worries, you can import [tldr pages](https://github.com/tldr-pages/tldr) to Memoire.
+
+Following rules are applied when converting tldr-pages to Memoire bookmark:
+- Command name -> Tag
+- Example description -> Annotation
+- Command example -> Command
+
+You can import individual tldr page by passing file's path. E.g. to import [pages/common/aws](https://github.com/tldr-pages/tldr/blob/master/pages/common/aws.md) run:
+```sh
+memoire --tldr pages/common/aws
+```
+
+
 ## Requirement
 ***
 This program use [rust-clipboard](https://github.com/aweinstock314/rust-clipboard) which requires x11 on Linux.

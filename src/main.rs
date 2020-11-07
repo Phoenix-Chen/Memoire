@@ -2,6 +2,7 @@ mod memoire;
 mod util;
 mod term;
 mod arg_parser;
+mod tldr_parser;
 
 use term::Term;
 
@@ -10,8 +11,8 @@ use std::env;
 
 use util::get_path_from_home_dir;
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     const HISTORY_FILE_NAME: &str = ".memoir_history.json";
     let history_file_path: String = get_path_from_home_dir(HISTORY_FILE_NAME);
 

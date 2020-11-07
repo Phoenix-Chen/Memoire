@@ -109,6 +109,7 @@ impl Term {
                                                     None => {}  // Add error log
                                                 }
                                                 self.wm.reset_action_list_state();
+                                                self.wm.reset_result_table_state();
                                                 self.wm.set_cur_focus("result_table");
                                             }
                                         }
