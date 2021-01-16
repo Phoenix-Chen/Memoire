@@ -10,9 +10,7 @@ pub async fn download_tldr(page_path: &str) -> Result<String, reqwest::Error> {
 
 pub fn parse_page(page_body: &str) -> Result<TLDRPage, TLDRPageParseError> {
     let mut tldr_page = TLDRPage::new();
-    if let Err(tldr_page_parse_err) = tldr_page.parse(page_body) {
-        return Err(tldr_page_parse_err);
-    };
+    tldr_page.parse(page_body)?;
     Ok(tldr_page)
 }
 
@@ -33,9 +31,7 @@ impl TLDRPage {
 
     pub fn parse(&mut self, page_body: &str) -> Result<(), TLDRPageParseError> {
         for line in page_body.lines() {
-            if let Err(tldr_page_parse_err) = self.parse_line(line) {
-                return Err(tldr_page_parse_err);
-            };
+            self.parse_line(line)?;
         }
         self.validate();
         Ok(())
