@@ -1,5 +1,3 @@
-extern crate termion;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Hash, Eq, PartialEq, Clone)]
@@ -7,6 +5,7 @@ pub struct Bookmark {
     command: String,
     annotation: String,
     tags: Vec<String>,
+    collection: String,
 }
 
 impl Bookmark {
@@ -17,11 +16,13 @@ impl Bookmark {
     /// * `command` - A string slice that holds the command
     /// * `annotation` - A string slice that holds the annotation
     /// * `tags` - A list of String that represents the tags
-    pub fn new(command: &str, annotation: &str, tags: &Vec<String>) -> Bookmark {
+    /// * `collection` - A string slice that holds the collection
+    pub fn new(command: &str, annotation: &str, tags: &Vec<String>, collection: &str) -> Bookmark {
         Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
             tags: tags.clone(),
+            collection: collection.to_string(),
         }
     }
 
