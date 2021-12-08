@@ -1,7 +1,7 @@
 extern crate clipboard;
 
 use crate::util;
-use crate::memoire;
+// use crate::memoire;
 use crate::arg_parser;
 
 mod widget;
@@ -26,7 +26,7 @@ use tui::{
 };
 
 use arg_parser::ArgParser;
-use memoire::Memoire;
+// use memoire::Memoire;
 use util::event::{Event, Events};
 use widget::{Action, WidgetManager, ACTIONS};
 
@@ -34,7 +34,7 @@ use widget::{Action, WidgetManager, ACTIONS};
 pub struct Term {
     screen: Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>,
     events: Events,
-    memoire: Memoire,
+    // memoire: Memoire,
     wm: WidgetManager,
     arg_parser: ArgParser
 }
@@ -48,7 +48,7 @@ impl Term {
             )))
             .unwrap(),
             events: Events::new(),
-            memoire: Memoire::load_from(memoire_history),
+            // memoire: Memoire::load_from(memoire_history),
             wm: WidgetManager::new(),
             arg_parser: ArgParser::new()
         }
@@ -58,7 +58,8 @@ impl Term {
     pub fn process_input(&mut self, input: Vec<String>) {
         self.arg_parser.matches_input(input);
         self.wm
-            .update_result_table(self.arg_parser.get_results(&mut self.memoire));
+            .update_result_table(
+                self.arg_parser.get_results());
     }
 
     pub fn display(&mut self) -> Result<(), mpsc::RecvError> {
@@ -103,8 +104,8 @@ impl Term {
                                             Action::Delete => {
                                                 match self.wm.get_selected_item_id() {
                                                     Some(id) => {
-                                                        self.memoire.remove_bookmark(id);
-                                                        self.wm.update_result_table(self.memoire.all());
+                                                        // self.memoire.remove_bookmark(id);
+                                                        // self.wm.update_result_table(self.memoire.all());
                                                     },
                                                     None => {}  // Add error log
                                                 }

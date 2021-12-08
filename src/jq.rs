@@ -34,28 +34,35 @@ fn json_to_search_results(json: &str) -> Vec<SearchResult> {
     }
 }
 
-pub fn search(dir_path: &str, keyword: &str) -> Vec<SearchResult> {
+pub fn search(dir_path: &str, keywords: &Vec<String>) -> Vec<SearchResult> {
     let bash = Command::new("bash")
         .arg("-c")
-        .arg(build_bash_command(dir_path, keyword))
+        .arg(build_bash_command(dir_path, keywords))
         .output()
         .expect("failed bash command");
     json_to_search_results(&String::from_utf8_lossy(&bash.stdout))
 }
 
 
-fn build_select(keyword: &str) -> String{
-    let contains: String = format!("contains(\"{}\")", keyword);
-    format!("select(\
-            (.bookmark.command | {}) or \
-            (.bookmark.annotation | {}) or \
-            (.bookmark.collection | {}) or \
-            (.bookmark.tags | select(.[] | {}))\
-        )", &contains, &contains, &contains, &contains)
+fn build_select(keywords: &Vec<String>) -> String {
+    let conditions: Vec<String> = keywords.iter().map(|keyword| {
+        let contains: String = format!("contains(\"{}\")", keyword);
+        [
+            format!("(.bookmark.command | {})", contains),
+            format!("(.bookmark.annotation | {})", contains),
+            format!("(.bookmark.collection | {})", contains),
+            format!("any(.bookmark.tags[] ; {})", contains),
+        ]
+    }).flat_map(|array: [String; 4]| 
+        array.iter().map(
+            |i| i.to_string()
+        ).collect::<Vec<String>>()
+    ).collect();
+    format!("select({})", conditions.join(" or "))
 }
 
 
-fn build_bash_command(dir_path: &str, keyword: &str) -> String {
+fn build_bash_command(dir_path: &str, keywords: &Vec<String>) -> String {
     format!("cat {}/*.json | jq -s '\
             [\
                 map(to_entries | \
@@ -63,5 +70,10 @@ fn build_bash_command(dir_path: &str, keyword: &str) -> String {
                 flatten | \
                 .[] | \
                 {}\
-            ]'", &dir_path, &build_select(keyword))
+            ]'", &dir_path, &build_select(keywords))
+}
+
+
+pub fn validate_jsons(dir_path: &str) {
+    // TODO: ensure no corrupt file in dir_path with jq
 }

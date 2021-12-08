@@ -1,10 +1,35 @@
 extern crate termion;
 extern crate dirs;
 
-use std::process;
-use std::fs::File;
-use std::io::prelude::*;
+// use lazy_static::lazy_static;
 use std::collections::HashSet;
+use std::{
+    fs::{File, create_dir_all, read_to_string},
+    path::Path,
+    process
+};
+use std::io::prelude::*;
+
+
+static COLLECTION_DIR_NAME: &str = ".memoire";
+static DEFAULT_FILE_NAME: &str = "default.json";
+
+// TODO: Change from function to variable
+pub fn get_collection_dir_path() -> String {
+    get_path_from_home_dir(COLLECTION_DIR_NAME)
+}
+
+pub fn get_default_json_path() -> String {
+    format!("{}/{}", &get_collection_dir_path(), DEFAULT_FILE_NAME)
+}
+
+// lazy_static! {
+//     pub static ref COLLECTION_DIR_PATH: String = get_path_from_home_dir(COLLECTION_DIR_NAME);
+//     pub static ref DEFAULT_JSON_PATH: String = format!("{}/{}", &COLLECTION_DIR_PATH, DEFAULT_FILE_NAME);
+// }
+// pub const COLLECTION_DIR_PATH: String = 
+// pub const DEFAULT_JSON_PATH: String = format!("{}/{}", &COLLECTION_DIR_PATH, DEFAULT_FILE_NAME);
+
 
 pub mod event;
 
@@ -152,7 +177,40 @@ pub fn multi_union<T: std::hash::Hash + std::cmp::Eq + std::clone::Clone>(mut v:
 }
 
 
-pub fn create_history(path: &str) {
+pub fn get_path_from_home_dir(relative_path: &str) -> String {
+    match dirs::home_dir() {
+        Some(home_dir) => {
+            let mut full_path = home_dir.into_os_string();
+            full_path.push("/");
+            full_path.push(relative_path);
+            match full_path.to_str() {
+                Some(s) => {
+                    s.to_owned()
+                },
+                None => {
+                    panic!("Unable to convert OS string to &str")
+                }
+            }
+        },
+        None => {
+            panic!("Unable to find $HOME")
+        }
+    }
+}
+
+
+pub fn create_collection_dir(path: &str) {
+    match create_dir_all(path) {
+        Ok(_) => {},
+        Err(_err) => {
+            println!("Unable to create directory: {}", path);
+            process::exit(0);
+        }
+    }
+}
+
+
+pub fn create_collection_json(path: &str) {
     match File::create(path) {
         Ok(mut file) => {
             // Create empty list for bookmarks
@@ -167,28 +225,6 @@ pub fn create_history(path: &str) {
         Err(_err) => {
             println!("Unable to create file: {}", path);
             process::exit(0);
-        }
-    }
-}
-
-
-pub fn get_path_from_home_dir(history_file_name: &str) -> String {
-    match dirs::home_dir() {
-        Some(home_dir) => {
-            let mut history_file_path = home_dir.into_os_string();
-            history_file_path.push("/");
-            history_file_path.push(history_file_name);
-            match history_file_path.to_str() {
-                Some(s) => {
-                    s.to_owned()
-                },
-                None => {
-                    panic!("Unable to convert OS string to &str")
-                }
-            }
-        },
-        None => {
-            panic!("Unable to find $HOME")
         }
     }
 }

@@ -1,13 +1,14 @@
 extern crate clap;
 
-use crate::{memoire, tldr_parser, util};
+use crate::{util, jq};
 
 use clap::{Arg, App, SubCommand};
 use futures::executor::block_on;
 
-use tldr_parser::{download_tldr, parse_page};
-use util::{AddMode, EditMode, Mode, SearchMode, multi_union, multi_intersection};
-use memoire::{SearchResult, Memoire};
+// use tldr_parser::{download_tldr, parse_page};
+use util::{AddMode, EditMode, Mode, SearchMode, multi_union, multi_intersection, get_collection_dir_path};
+// use memoire::{SearchResult, Memoire};
+use jq::{SearchResult, search};
 use std::collections::HashSet;
 
 pub struct ArgParser {
@@ -28,51 +29,58 @@ impl ArgParser {
         self.mode = None;
     }
 
-    pub fn get_results(&self, memoire: &mut Memoire) -> HashSet<SearchResult> {
+    pub fn get_results(&self) -> Vec<SearchResult> {
         match &self.mode {
             Some(Mode::Delete(id)) => {
-                memoire.remove_bookmark(*id);
-                memoire.search(true, true, true, "")
+                // memoire.remove_bookmark(*id);
+                // memoire.search(true, true, true, "")
+                Vec::new()
             },
             Some(Mode::Search(search_mode)) => {
-                let mut search_results: Vec<HashSet<SearchResult>> = Vec::new();
-                for keyword in search_mode.get_searches() {
-                    search_results.push(memoire.search(true, true, true, keyword));
-                }
-                for keyword in search_mode.get_tags() {
-                    search_results.push(memoire.search(false, false, true, keyword));
-                }
-                for keyword in search_mode.get_commands() {
-                    search_results.push(memoire.search(true, false, false, keyword));
-                }
-                for keyword in search_mode.get_annotations() {
-                    search_results.push(memoire.search(false, true, false, keyword));
-                }
+                
+                // let mut search_results: Vec<HashSet<SearchResult>> = Vec::new();
+                // for keyword in  {
+                    
+                // }
+                search(&get_collection_dir_path(), search_mode.get_searches())
+                // for keyword in search_mode.get_tags() {
+                //     search_results.push(memoire.search(false, false, true, keyword));
+                // }
+                // for keyword in search_mode.get_commands() {
+                //     search_results.push(memoire.search(true, false, false, keyword));
+                // }
+                // for keyword in search_mode.get_annotations() {
+                //     search_results.push(memoire.search(false, true, false, keyword));
+                // }
 
-                if search_mode.get_union() {
-                    return multi_union(search_results);
-                }
-                multi_intersection(search_results)
+                // if search_mode.get_union() {
+                //     return multi_union(search_results);
+                // }
+                // multi_intersection(search_results)
             },
             Some(Mode::Add(add_mode)) => {
-                memoire.add_bookmark(&add_mode.command, &add_mode.annotation, &add_mode.tags);
-                memoire.search(true, true, true, "")
+                // memoire.add_bookmark(&add_mode.command, &add_mode.annotation, &add_mode.tags);
+                // memoire.search(true, true, true, "")
+                Vec::new()
             },
             Some(Mode::Edit(edit_mode)) => {
-                memoire.edit_bookmark(
-                    edit_mode.get_id(),
-                    Some(edit_mode.get_command()),
-                    Some(edit_mode.get_annotation()),
-                    Some(edit_mode.get_tags())
-                );
-                memoire.search(true, false, false, "")
+                Vec::new()
+                // memoire.edit_bookmark(
+                //     edit_mode.get_id(),
+                //     Some(edit_mode.get_command()),
+                //     Some(edit_mode.get_annotation()),
+                //     Some(edit_mode.get_tags())
+                // );
+                // memoire.search(true, false, false, "")
             },
             Some(Mode::Parse(tldr_page_path)) => {
-                update_memoire_from_tldr(memoire, tldr_page_path);
-                memoire.search(true, true, true, "")
+                Vec::new()
+                // update_memoire_from_tldr(memoire, tldr_page_path);
+                // memoire.search(true, true, true, "")
             },
             None => {
-                memoire.search(true, true, true, "")
+                Vec::new()
+                // memoire.search(true, true, true, "")
             }
         }
     }
@@ -287,17 +295,17 @@ impl ArgParser {
 }
 
 
-fn update_memoire_from_tldr(memoire: &mut Memoire, page_path: &str) {
-    if let Ok(body) = block_on(download_tldr(page_path)) {
-        if let Ok(tldr_page) = parse_page(&body) {
-            let tags = vec![tldr_page.get_command_name().to_string()];
-            for v in tldr_page.get_examples().into_iter() {
-                memoire.add_bookmark(&v.1, &v.0, &tags)
-            }
-        } else {
-            panic!("Failed to parse tldr page at: {:?}", page_path);
-        }
-    } else {
-        panic!("Failed to download tldr page at: {:?}", page_path);
-    }
-}
+// fn update_memoire_from_tldr(memoire: &mut Memoire, page_path: &str) {
+//     if let Ok(body) = block_on(download_tldr(page_path)) {
+//         if let Ok(tldr_page) = parse_page(&body) {
+//             let tags = vec![tldr_page.get_command_name().to_string()];
+//             for v in tldr_page.get_examples().into_iter() {
+//                 memoire.add_bookmark(&v.1, &v.0, &tags)
+//             }
+//         } else {
+//             panic!("Failed to parse tldr page at: {:?}", page_path);
+//         }
+//     } else {
+//         panic!("Failed to download tldr page at: {:?}", page_path);
+//     }
+// }

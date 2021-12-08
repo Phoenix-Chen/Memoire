@@ -1,4 +1,4 @@
-use crate::memoire;
+// use crate::memoire;
 
 use std::{
     collections::HashSet,
@@ -10,7 +10,7 @@ use tui::{
     widgets::{Block, Borders, Row, Table, TableState}
 };
 
-use memoire::SearchResult;
+use crate::jq::SearchResult;
 
 
 pub struct ResultTable {
@@ -31,8 +31,8 @@ impl ResultTable {
         ResultTable::new(HashSet::new())
     }
 
-    pub fn update_results(&mut self, results: HashSet<SearchResult>) {
-        self.items = hashset_to_vec(&results);
+    pub fn update_results(&mut self, results: Vec<SearchResult>) {
+        self.items = results;
     }
 
     pub fn get_widget(&self) -> Table<'_, Iter<'_, &str>, impl Iterator<Item=Row<impl Iterator<Item=String> + '_>>> {

@@ -1,4 +1,4 @@
-use crate::memoire;
+// use crate::memoire;
 
 mod action_list;
 mod input_dialog;
@@ -20,8 +20,9 @@ use tui::{
     widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Row, Wrap}
 };
 
-use memoire::{Bookmark, SearchResult};
-
+// use memoire::{Bookmark, SearchResult};
+use crate::bookmark::Bookmark;
+use crate::jq::SearchResult;
 
 enum Widget {
     ActionList(ActionList),
@@ -49,7 +50,7 @@ impl WidgetManager {
     }
 
     /// Update result_table with passed input
-    pub fn update_result_table(&mut self, results: HashSet<SearchResult>) {
+    pub fn update_result_table(&mut self, results: Vec<SearchResult>) {
         let result_table = self.get_mut_result_table();
         result_table.update_results(results);
     }
@@ -101,7 +102,7 @@ impl WidgetManager {
         let result_table = self.get_result_table();
         match result_table.state.selected() {
             Some(state) => {
-                Some(result_table.get_item(state).get_id())
+                Some(result_table.get_item(state).get_index())
             },
             None =>{
                 None
