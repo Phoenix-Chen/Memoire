@@ -31,7 +31,7 @@ impl ArgParser {
 
     pub fn get_results(&self) -> Vec<SearchResult> {
         match &self.mode {
-            Some(Mode::Delete(id)) => {
+            Some(Mode::Delete(index, collection)) => {
                 // memoire.remove_bookmark(*id);
                 // memoire.search(true, true, true, "")
                 Vec::new()
@@ -157,12 +157,19 @@ impl ArgParser {
             )
             .subcommand(SubCommand::with_name("--delete")
                 .about("Delete bookmark")
-                .arg(Arg::with_name("ID")
+                .arg(Arg::with_name("Index")
                     .short("i")
                     .takes_value(true)
-                    .long("id")
+                    .long("index")
                     .required(true)
-                    .help("ID of the bookmark")
+                    .help("Index of the bookmark")
+                )
+                .arg(Arg::with_name("Collection")
+                    .short("c")
+                    .takes_value(true)
+                    .long("collection")
+                    .required(true)
+                    .help("Collection of the bookmark")
                 )
             )
             .subcommand(SubCommand::with_name("--edit")
@@ -225,9 +232,10 @@ impl ArgParser {
 
         // Look for delete subcommand
         if let Some(matches) = matches.subcommand_matches("--delete") {
-            let id: String = matches.values_of("ID").unwrap().collect();
-            let id: usize = id.parse().unwrap();
-            self.mode = Some(Mode::Delete(id));
+            let index: String = matches.values_of("Index").unwrap().collect();
+            let id: usize = index.parse().unwrap();
+            let collection: String = matches.values_of("Collection").unwrap().collect();
+            self.mode = Some(Mode::Delete(id, collection));
             return;
         }
 

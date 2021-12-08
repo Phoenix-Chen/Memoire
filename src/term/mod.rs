@@ -41,7 +41,7 @@ pub struct Term {
 
 
 impl Term {
-    pub fn new(memoire_history: &str) -> Term {
+    pub fn new() -> Term {
         Term {
             screen: Terminal::new(TermionBackend::new(AlternateScreen::from(
                 stdout().into_raw_mode().unwrap(),
@@ -102,8 +102,8 @@ impl Term {
                                                 self.wm.set_cur_focus("input_dialog");
                                             }
                                             Action::Delete => {
-                                                match self.wm.get_selected_item_id() {
-                                                    Some(id) => {
+                                                match self.wm.get_selected_item_index() {
+                                                    Some(index) => {
                                                         // self.memoire.remove_bookmark(id);
                                                         // self.wm.update_result_table(self.memoire.all());
                                                     },
@@ -150,13 +150,13 @@ impl Term {
                                     }
                                 };
                                 common_args.append(&mut tags);
-                                let new_args = match self.wm.get_selected_item_id() {
-                                    Some(id) => {  // Edit
+                                let new_args = match self.wm.get_selected_item_index() {
+                                    Some(index) => {  // Edit
                                         let mut edit_args = vec![
                                             "memoire".to_owned(),
                                             "--edit".to_owned(),
                                             "--id".to_owned(),
-                                            id.to_string()
+                                            index.to_string()
                                         ];
                                         edit_args.append(&mut common_args);
                                         edit_args

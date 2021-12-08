@@ -1,4 +1,4 @@
-mod bookmark;
+pub mod bookmark;
 
 use std::{
     fs::{File, create_dir_all, read_to_string},
@@ -7,6 +7,7 @@ use std::{
 };
 use std::io::prelude::*;
 use bookmark::Bookmark;
+use crate::util::create_collection_json;
 
 
 #[derive(Hash, Eq, PartialEq, Clone)]

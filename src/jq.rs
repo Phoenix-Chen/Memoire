@@ -1,7 +1,8 @@
 extern crate serde_json;
+
 use serde::{Deserialize};
 
-use crate::bookmark::Bookmark;
+use crate::collection::bookmark::Bookmark;
 use std::process::{Command, exit};
 
 

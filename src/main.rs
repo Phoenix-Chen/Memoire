@@ -3,12 +3,11 @@ mod util;
 mod term;
 mod arg_parser;
 mod jq;
-mod bookmark;
+mod collection;
 
 // mod tldr_parser;
 
 use term::Term;
-use jq::SearchResult;
 use util::{get_collection_dir_path, get_default_json_path};
 
 use std::path::Path;
@@ -34,7 +33,7 @@ async fn main() {
     // Validate all json format
     jq::validate_jsons(&get_collection_dir_path());
 
-    let mut term = Term::new(&get_collection_dir_path());
+    let mut term = Term::new();
     let args: Vec<String> = env::args().collect();
 
     term.process_input(args);

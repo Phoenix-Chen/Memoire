@@ -21,7 +21,7 @@ use tui::{
 };
 
 // use memoire::{Bookmark, SearchResult};
-use crate::bookmark::Bookmark;
+use crate::collection::bookmark::Bookmark;
 use crate::jq::SearchResult;
 
 enum Widget {
@@ -98,7 +98,7 @@ impl WidgetManager {
         self.get_result_table_state().selected()
     }
 
-    pub fn get_selected_item_id(&self) -> Option<usize> {
+    pub fn get_selected_item_index(&self) -> Option<usize> {
         let result_table = self.get_result_table();
         match result_table.state.selected() {
             Some(state) => {

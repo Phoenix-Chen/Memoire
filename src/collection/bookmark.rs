@@ -50,6 +50,10 @@ impl Bookmark {
         self.tags = tags.to_vec();
     }
 
+    pub fn get_collection(&self) -> &String {
+        &self.collection
+    }
+
     /// Returns a boolean indicating whether command contains given string slice
     ///
     /// # Arguments

@@ -19,6 +19,7 @@ pub fn get_collection_dir_path() -> String {
     get_path_from_home_dir(COLLECTION_DIR_NAME)
 }
 
+// TODO: Change from function to variable
 pub fn get_default_json_path() -> String {
     format!("{}/{}", &get_collection_dir_path(), DEFAULT_FILE_NAME)
 }
@@ -27,15 +28,12 @@ pub fn get_default_json_path() -> String {
 //     pub static ref COLLECTION_DIR_PATH: String = get_path_from_home_dir(COLLECTION_DIR_NAME);
 //     pub static ref DEFAULT_JSON_PATH: String = format!("{}/{}", &COLLECTION_DIR_PATH, DEFAULT_FILE_NAME);
 // }
-// pub const COLLECTION_DIR_PATH: String = 
-// pub const DEFAULT_JSON_PATH: String = format!("{}/{}", &COLLECTION_DIR_PATH, DEFAULT_FILE_NAME);
-
 
 pub mod event;
 
 pub enum Mode {
     Add(AddMode),
-    Delete(usize),
+    Delete(usize, String),
     Edit(EditMode),
     Parse(String),
     Search(SearchMode)
