@@ -122,11 +122,6 @@ impl Memoire {
     //     }
     // }
 
-    /// Get all bookmarks in memoire
-    pub fn all(&self) -> HashSet<SearchResult> {
-        self.search(true, true, true, "")
-    }
-
     // TODO: Update contains for case insensitive match
     pub fn search(&self, in_command: bool, in_annotation: bool, in_tags: bool, search_str: &str) -> HashSet<SearchResult> {
         let mut search_results: HashSet<SearchResult> = HashSet::new();

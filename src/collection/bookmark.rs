@@ -99,6 +99,7 @@ impl Bookmark {
             ("command".to_string(), self.command.to_string()),
             ("annotation".to_string(), self.annotation.to_string()),
             ("tags".to_string(), self.get_tags_as_string(", ")),
+            ("collection".to_string(), self.collection.to_string()),
         ]
     }
 }
