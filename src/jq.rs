@@ -1,13 +1,13 @@
 extern crate serde_json;
 
+use std::process::{Command, exit};
+
 use serde::{Deserialize};
 
 use crate::collection::bookmark::Bookmark;
 use crate::util::write_to_json;
-use std::process::{Command, exit};
 
 
-/// SearchResult contains id/index of the bookmark and a copy of bookmark
 #[derive(Deserialize, Hash, Eq, PartialEq, Clone)]
 pub struct SearchResult {
     index: usize,

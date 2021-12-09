@@ -1,15 +1,12 @@
 extern crate clap;
 
-use crate::{util, jq};
-
 use clap::{Arg, App, SubCommand};
-use futures::executor::block_on;
 
-// use tldr_parser::{download_tldr, parse_page};
-use util::{AddMode, EditMode, Mode, SearchMode, multi_union, multi_intersection, get_collection_dir_path};
-// use memoire::{SearchResult, Memoire};
-use jq::{SearchResult, search};
-use std::collections::HashSet;
+use crate::{
+    jq::{SearchResult, search},
+    util::{AddMode, EditMode, Mode, SearchMode, get_collection_dir_path}
+};
+
 
 pub struct ArgParser {
     input: Option<Vec<String>>,

@@ -1,11 +1,8 @@
-// mod memoire;
 mod util;
 mod term;
 mod arg_parser;
 mod jq;
 mod collection;
-
-// mod tldr_parser;
 
 use term::Term;
 use util::{DEFAULT_JSON_NAME, get_collection_dir_path, get_json_path};
@@ -14,9 +11,7 @@ use std::path::Path;
 use std::env;
 
 
-
-#[tokio::main]
-async fn main() {
+fn main() {
     // const COLLECTION_DIR_NAME: &str = ".memoire";
     // let collection_dir_path: String = util::get_path_from_home_dir(COLLECTION_DIR_NAME);
     // const DEFAULT_FILE_NAME: &str = "default.json";
