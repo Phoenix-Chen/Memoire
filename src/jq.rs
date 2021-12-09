@@ -3,6 +3,7 @@ extern crate serde_json;
 use serde::{Deserialize};
 
 use crate::collection::bookmark::Bookmark;
+use crate::util::write_to_json;
 use std::process::{Command, exit};
 
 
@@ -25,6 +26,46 @@ impl SearchResult {
 }
 
 
+pub fn add(json_path: &str, bookmark: &Bookmark) {
+
+}
+
+
+pub fn delete(json_path: &str, index: usize) {
+    write_to_json(json_path, Some(&execute_bash(
+        &format!(
+            "cat {} | jq -s 'del(.[0][{}]) | .[0]'",
+            json_path,
+            index
+        )
+    )));
+}
+
+
+pub fn search(dir_path: &str, keywords: &Vec<String>) -> Vec<SearchResult> {
+    json_to_search_results(
+        &execute_bash(
+            &build_lookup_command(dir_path, keywords)
+        )
+    )
+}
+
+
+pub fn validate_jsons(dir_path: &str) {
+    // TODO: ensure no corrupt file in dir_path with jq
+}
+
+
+fn execute_bash(command: &str) -> String {
+    let bash = Command::new("bash")
+        .arg("-c")
+        .arg(command)
+        .output()
+        .expect("failed bash command");
+    String::from_utf8_lossy(&bash.stdout).into_owned()
+}
+
+
 fn json_to_search_results(json: &str) -> Vec<SearchResult> {
     match serde_json::from_str(&json) {
         Ok(v) => v,
@@ -33,15 +74,6 @@ fn json_to_search_results(json: &str) -> Vec<SearchResult> {
             exit(0);
         }
     }
-}
-
-pub fn search(dir_path: &str, keywords: &Vec<String>) -> Vec<SearchResult> {
-    let bash = Command::new("bash")
-        .arg("-c")
-        .arg(build_bash_command(dir_path, keywords))
-        .output()
-        .expect("failed bash command");
-    json_to_search_results(&String::from_utf8_lossy(&bash.stdout))
 }
 
 
@@ -63,7 +95,7 @@ fn build_select(keywords: &Vec<String>) -> String {
 }
 
 
-fn build_bash_command(dir_path: &str, keywords: &Vec<String>) -> String {
+fn build_lookup_command(dir_path: &str, keywords: &Vec<String>) -> String {
     format!("cat {}/*.json | jq -s '\
             [\
                 map(to_entries | \
@@ -72,9 +104,4 @@ fn build_bash_command(dir_path: &str, keywords: &Vec<String>) -> String {
                 .[] | \
                 {}\
             ]'", &dir_path, &build_select(keywords))
-}
-
-
-pub fn validate_jsons(dir_path: &str) {
-    // TODO: ensure no corrupt file in dir_path with jq
 }

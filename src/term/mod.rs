@@ -2,6 +2,7 @@ extern crate clipboard;
 
 use crate::util;
 // use crate::memoire;
+use crate::jq;
 use crate::arg_parser;
 
 mod widget;
@@ -104,6 +105,10 @@ impl Term {
                                             Action::Delete => {
                                                 match self.wm.get_selected_item_index() {
                                                     Some(index) => {
+                                                        jq::delete(
+                                                            &util::get_json_path(self.wm.get_selected_item_collection()),
+                                                            index
+                                                        )
                                                         // self.memoire.remove_bookmark(id);
                                                         // self.wm.update_result_table(self.memoire.all());
                                                     },

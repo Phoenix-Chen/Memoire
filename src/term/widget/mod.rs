@@ -110,6 +110,12 @@ impl WidgetManager {
         }
     }
 
+    pub fn get_selected_item_collection(&self) -> &str {
+        let result_table = self.get_result_table();
+        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_collection()
+    }
+
+
     pub fn get_selected_item_command(&self) -> &str {
         let result_table = self.get_result_table();
         result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_command()

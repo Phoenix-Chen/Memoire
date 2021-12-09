@@ -8,7 +8,7 @@ mod collection;
 // mod tldr_parser;
 
 use term::Term;
-use util::{get_collection_dir_path, get_default_json_path};
+use util::{DEFAULT_JSON_NAME, get_collection_dir_path, get_json_path};
 
 use std::path::Path;
 use std::env;
@@ -23,10 +23,11 @@ async fn main() {
     // let default_json_path: String = format!("{}/{}", &collection_dir_path, DEFAULT_FILE_NAME);
 
     // Create Collection and default.json if does not exist
-    if !Path::new(&get_default_json_path()).exists() {
+    if !Path::new(&get_json_path(DEFAULT_JSON_NAME)).exists() {
         util::create_collection_dir(&get_collection_dir_path());
-        util::create_collection_json(
-            &get_default_json_path()
+        util::write_to_json(
+            &get_json_path(DEFAULT_JSON_NAME),
+            None
         );
     }
 
