@@ -85,7 +85,7 @@ impl WidgetManager {
     }
 
     /// Returns a tui::widgets::Table from result_table
-    pub fn get_result_table_widget(&self) -> Table<'_, Iter<'_, &str>, impl Iterator<Item=Row<impl Iterator<Item=String> + '_>>> {
+    pub fn get_result_table_widget(&self) -> Table {
         self.get_result_table().get_widget()
     }
 
