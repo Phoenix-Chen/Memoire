@@ -25,7 +25,7 @@ impl Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
             tags: tags.clone(),
-            collection: collection.unwrap_or(DEFAULT_JSON_NAME).to_string(),
+            collection: collection.unwrap_or(DEFAULT_JSON_NAME).to_string(),  // whether this logic should be here?
         }
     }
 

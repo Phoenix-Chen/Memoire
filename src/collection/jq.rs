@@ -26,6 +26,7 @@ impl SearchResult {
 }
 
 
+// TODO: implement insert at index, currently index is unused
 pub fn add(json_path: &str, bookmark: &Bookmark, index: Option<usize>) {
     write_to_json(json_path, Some(&execute_bash(
         &format!(
