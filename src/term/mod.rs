@@ -1,11 +1,7 @@
 extern crate clipboard;
 
-use crate::util;
-// use crate::memoire;
-use crate::jq;
-use crate::arg_parser;
-
 mod widget;
+mod event;
 
 use std::{
     io::{stdout, Stdout},
@@ -26,18 +22,16 @@ use tui::{
     Terminal,
 };
 
-use arg_parser::ArgParser;
-// use memoire::Memoire;
-use util::event::{Event, Events};
+use event::{Event, Events};
 use widget::{Action, WidgetManager, ACTIONS};
+use crate::collection::jq;
+use crate::collection::util::get_json_path;
 
 
 pub struct Term {
     screen: Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>,
     events: Events,
-    // memoire: Memoire,
     wm: WidgetManager,
-    arg_parser: ArgParser
 }
 
 
@@ -49,19 +43,17 @@ impl Term {
             )))
             .unwrap(),
             events: Events::new(),
-            // memoire: Memoire::load_from(memoire_history),
             wm: WidgetManager::new(),
-            arg_parser: ArgParser::new()
         }
     }
 
     /// Pass input into arg_parser then get the results from arg_parser and update result_table
-    pub fn process_input(&mut self, input: Vec<String>) {
-        self.arg_parser.matches_input(input);
-        self.wm
-            .update_result_table(
-                self.arg_parser.get_results());
-    }
+    // pub fn process_input(&mut self, input: Vec<String>) {
+        // self.arg_parser.matches_input(input);
+        // self.wm
+        //     .update_result_table(
+        //         self.arg_parser.get_results());
+    // }
 
     pub fn display(&mut self) -> Result<(), mpsc::RecvError> {
         self.screen.hide_cursor().unwrap();
@@ -78,6 +70,7 @@ impl Term {
                                 ("command".to_string(), "".to_string()),
                                 ("annotation".to_string(), "".to_string()),
                                 ("tags".to_string(), "".to_string()),
+                                ("collection".to_string(), "".to_string()),
                             ]);
                             self.wm.set_cur_focus("input_dialog");
                         }
@@ -106,11 +99,9 @@ impl Term {
                                                 match self.wm.get_selected_item_index() {
                                                     Some(index) => {
                                                         jq::delete(
-                                                            &util::get_json_path(self.wm.get_selected_item_collection()),
+                                                            &get_json_path(self.wm.get_selected_item_collection()),
                                                             index
-                                                        )
-                                                        // self.memoire.remove_bookmark(id);
-                                                        // self.wm.update_result_table(self.memoire.all());
+                                                        );
                                                     },
                                                     None => {}  // Add error log
                                                 }
@@ -137,7 +128,7 @@ impl Term {
                                     // TODO: research extend_from_slice
                                     common_args.append(
                                         &mut vec![
-                                            format!("{}{}", "--", input.0),
+                                            format!("--{}", input.0),
                                             input.1.to_owned()
                                         ]
                                     );
@@ -155,27 +146,15 @@ impl Term {
                                     }
                                 };
                                 common_args.append(&mut tags);
-                                let new_args = match self.wm.get_selected_item_index() {
+                                match self.wm.get_selected_item_index() {
                                     Some(index) => {  // Edit
-                                        let mut edit_args = vec![
-                                            "memoire".to_owned(),
-                                            "--edit".to_owned(),
-                                            "--id".to_owned(),
-                                            index.to_string()
-                                        ];
-                                        edit_args.append(&mut common_args);
-                                        edit_args
+                                        
                                     },
                                     None => {  // Add
-                                        let mut add_args = vec![
-                                            "memoire".to_owned(),
-                                            "--add".to_owned()
-                                        ];
-                                        add_args.append(&mut common_args);
-                                        add_args
+                                        
                                     }
                                 };
-                                self.process_input(new_args);
+                                // self.process_input(new_args);
                                 self.wm.reset_action_list_state();
                                 self.wm.set_cur_focus("result_table");
                             }

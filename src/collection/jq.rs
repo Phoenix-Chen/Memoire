@@ -4,8 +4,8 @@ use std::process::{Command, exit};
 
 use serde::{Deserialize};
 
-use crate::collection::bookmark::Bookmark;
-use crate::util::write_to_json;
+use super::bookmark::Bookmark;
+use super::util::write_to_json;
 
 
 #[derive(Deserialize, Hash, Eq, PartialEq, Clone)]
@@ -26,8 +26,14 @@ impl SearchResult {
 }
 
 
-pub fn add(json_path: &str, bookmark: &Bookmark) {
-
+pub fn add(json_path: &str, bookmark: &Bookmark, index: Option<usize>) {
+    write_to_json(json_path, Some(&execute_bash(
+        &format!(
+            "cat {} | jq -s '.[0] |= .+ [{}] | .[0]'",
+            json_path,
+            serde_json::to_string(&bookmark).expect("Unable to parse bookmarks")
+        )
+    )));
 }
 
 

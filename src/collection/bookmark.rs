@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+use super::util::DEFAULT_JSON_NAME;
+
+
 #[derive(Serialize, Deserialize, Hash, Eq, PartialEq, Clone)]
 pub struct Bookmark {
     command: String,
@@ -17,12 +20,12 @@ impl Bookmark {
     /// * `annotation` - A string slice that holds the annotation
     /// * `tags` - A list of String that represents the tags
     /// * `collection` - A string slice that holds the collection
-    pub fn new(command: &str, annotation: &str, tags: &Vec<String>, collection: &str) -> Bookmark {
+    pub fn new(command: &str, annotation: &str, tags: &Vec<String>, collection: Option<&str>) -> Bookmark {
         Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
             tags: tags.clone(),
-            collection: collection.to_string(),
+            collection: collection.unwrap_or(DEFAULT_JSON_NAME).to_string(),
         }
     }
 
@@ -54,43 +57,12 @@ impl Bookmark {
         &self.collection
     }
 
-    /// Returns a boolean indicating whether command contains given string slice
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - A string slice that holds the given keyword
-    pub fn command_contains(&self, s: &str) -> bool {
-        self.command.contains(s)
-    }
-
-    /// Returns a boolean indicating whether annotation contains given string slice
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - A string slice that holds the given keyword
-    pub fn annotation_contains(&self, s: &str) -> bool {
-        self.annotation.contains(s)
-    }
-
-    /// Returns a boolean indicating whether any tag contains given string slice
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - A string slice that holds the given keyword
-    pub fn tags_contains(&self, s: &str) -> bool {
-        for tag in self.tags.iter() {
-            if tag.contains(s) {
-                return true;
-            }
-        }
-        false
-    }
-
     pub fn to_vec(&self) -> Vec<String> {
         vec![
             self.command.to_string(),
             self.annotation.to_string(),
             self.get_tags_as_string(" "),
+            self.collection.to_string(),
         ]
     }
 

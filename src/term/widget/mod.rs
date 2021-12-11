@@ -22,7 +22,7 @@ use tui::{
 
 // use memoire::{Bookmark, SearchResult};
 use crate::collection::bookmark::Bookmark;
-use crate::jq::SearchResult;
+use crate::collection::jq::SearchResult;
 
 enum Widget {
     ActionList(ActionList),
@@ -286,7 +286,7 @@ impl WidgetManager {
 }
 
 
-fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans>{
+fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans> {
     vec![
         Spans::from(vec![
             Span::styled("Command: ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
@@ -299,6 +299,10 @@ fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans>{
         Spans::from(vec![
             Span::styled("Tags: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::styled(bookmark.get_tags_as_string(", "), Style::default().fg(Color::Yellow))
+        ]),
+        Spans::from(vec![
+            Span::styled("Collection: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_collection(), Style::default().fg(Color::Cyan))
         ]),
     ]
 }

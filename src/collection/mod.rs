@@ -1,54 +1,78 @@
 pub mod bookmark;
+pub mod util;
+pub mod jq;
 
-use std::{
-    fs::{File, create_dir_all, read_to_string},
-    path::Path,
-    process
-};
-use std::io::prelude::*;
 use bookmark::Bookmark;
-use crate::util::{
-    write_to_json, get_json_path
-};
 
 
-// #[derive(Hash, Eq, PartialEq, Clone)]
-// pub struct Collection {
-//     dir_path: String,
-//     name: String
-// }
+pub enum Mode {
+    Add(Bookmark),
+    Delete(usize, String),
+    Edit(usize, Bookmark),
+    Search(SearchMode)
+}
+
+pub struct SearchMode {
+    union: bool,
+    searches: Vec<String>,
+    commands: Vec<String>,
+    annotations: Vec<String>,
+    tags: Vec<String>
+}
 
 
-// impl Collection {
-//     pub fn get_or_create(dir_path: &str, collection_name: &str) -> Collection {
-//         let collection_path: String = make_collection_path(dir_path, collection_name);
-//         if !Path::new(&collection_path).exists() {
-//             create_collection_json(&collection_path);
-//         }
-//         Collection {
-//             dir_path: dir_path.to_string(),
-//             name: collection_name.to_string()
-//         }
-//     }
-
-//     fn get_bookmarks(&self) -> Vec<Bookmark> {
-//         let collection_path: String = make_collection_path(&self.dir_path, &self.name);
-//         match serde_json::from_str(&read_file_as_string(&collection_path)) {
-//             Ok(v) => v,
-//             Err(_err) => {
-//                 println!("Unable to parse json: {:?}", &collection_path);
-//                 process::exit(0);
-//             }
-//         }
-//     }
-// }
-
-fn read_file_as_string(path: &str) -> String {
-    match read_to_string(&path) {
-        Ok(data) => data,
-        Err(_err) => {
-            println!("Unable to read file: {:?}", &path);
-            process::exit(0);
+impl SearchMode {
+    pub fn default() -> SearchMode {
+        SearchMode {
+            union: true,
+            searches: Vec::new(),
+            commands: Vec::new(),
+            annotations: Vec::new(),
+            tags: Vec::new(),
         }
+    }
+
+    pub fn set_tags(&mut self, tags: Vec<String>) {
+        self.tags = tags;
+    }
+
+    pub fn get_tags(&self) -> &Vec<String> {
+        &self.tags
+    }
+
+    pub fn set_commands(&mut self, commands: Vec<String>) {
+        self.commands = commands;
+    }
+
+    pub fn get_commands(&self) -> &Vec<String> {
+        &self.commands
+    }
+
+    pub fn set_annotations(&mut self, annotations: Vec<String>) {
+        self.annotations = annotations;
+    }
+
+    pub fn get_annotations(&self) -> &Vec<String> {
+        &self.annotations
+    }
+
+    pub fn set_searches(&mut self, searches: Vec<String>) {
+        self.searches = searches;
+    }
+
+    pub fn get_searches(&self) -> &Vec<String> {
+        &self.searches
+    }
+
+    pub fn set_union(&mut self, b: bool) {
+        self.union = b;
+    }
+
+    pub fn get_union(&self) -> bool {
+        self.union
+    }
+
+    pub fn has_input(&self) -> bool {
+        self.searches.len() + self.annotations.len() + self.commands.len() + self.get_tags().len() > 0
     }
 }

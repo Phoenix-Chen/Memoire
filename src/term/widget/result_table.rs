@@ -10,7 +10,7 @@ use tui::{
     widgets::{Block, Borders, Row, Table, TableState}
 };
 
-use crate::jq::SearchResult;
+use crate::collection::jq::SearchResult;
 
 
 pub struct ResultTable {
@@ -37,13 +37,11 @@ impl ResultTable {
 
     pub fn get_widget(&self) -> Table {
         // Define selected style for table row
-        let selected_row_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+        let selected_row_style: Style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
 
         // Set table
-        // const HEADER: [&str; 3] = ["Command", "Annotation", "Tags"];
-        // const header_style: Style = 
         let header: Row = Row::new(
-            ["Command", "Annotation", "Tags"]
+            ["Command", "Annotation", "Tags", "Collection"]
         ).style(
             Style::default().fg(Color::Green)
                             .add_modifier(Modifier::BOLD)
@@ -63,8 +61,9 @@ impl ResultTable {
             .column_spacing(1)
             .widths(&[
                 Constraint::Percentage(35),
-                Constraint::Percentage(35),
                 Constraint::Percentage(30),
+                Constraint::Percentage(20),
+                Constraint::Percentage(15),
             ]);
         t
     }

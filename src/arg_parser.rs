@@ -3,8 +3,15 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 use crate::{
-    jq::{SearchResult, search},
-    util::{AddMode, EditMode, Mode, SearchMode, get_collection_dir_path}
+    collection::{
+        Mode,
+        SearchMode,
+        bookmark::Bookmark,
+        jq::{SearchResult, add, delete, search},
+        util::{get_collection_dir_path, get_json_path}
+    }
+    
+    
 };
 
 
@@ -31,6 +38,10 @@ impl ArgParser {
             Some(Mode::Delete(index, collection)) => {
                 // memoire.remove_bookmark(*id);
                 // memoire.search(true, true, true, "")
+                delete(
+                    &get_json_path(&collection),
+                    *index
+                );
                 Vec::new()
             },
             Some(Mode::Search(search_mode)) => {
@@ -55,12 +66,15 @@ impl ArgParser {
                 // }
                 // multi_intersection(search_results)
             },
-            Some(Mode::Add(add_mode)) => {
-                // memoire.add_bookmark(&add_mode.command, &add_mode.annotation, &add_mode.tags);
-                // memoire.search(true, true, true, "")
+            Some(Mode::Add(bookmark)) => {
+                add(
+                    &get_json_path(&bookmark.get_collection()),
+                    &bookmark,
+                    None
+                );
                 Vec::new()
             },
-            Some(Mode::Edit(edit_mode)) => {
+            Some(Mode::Edit(index, bookmark)) => {
                 Vec::new()
                 // memoire.edit_bookmark(
                 //     edit_mode.get_id(),
@@ -69,11 +83,6 @@ impl ArgParser {
                 //     Some(edit_mode.get_tags())
                 // );
                 // memoire.search(true, false, false, "")
-            },
-            Some(Mode::Parse(tldr_page_path)) => {
-                Vec::new()
-                // update_memoire_from_tldr(memoire, tldr_page_path);
-                // memoire.search(true, true, true, "")
             },
             None => {
                 Vec::new()
@@ -122,11 +131,6 @@ impl ArgParser {
                 .takes_value(false)
                 .help("Return search results with intersection (default union)")
             )
-            .arg(Arg::with_name("TLDR")
-                .long("tldr")
-                .takes_value(true)
-                .help("Load from tldr-pages. (ex. pages/osx/base64)")
-            )
             .subcommand(SubCommand::with_name("--add")
                 .about("Add bookmark")
                 .arg(Arg::with_name("Tags")
@@ -151,6 +155,13 @@ impl ArgParser {
                     .required(true)
                     .help("Search with command")
                 )
+                .arg(Arg::with_name("Collection")
+                    // .short("c")
+                    .long("collection")
+                    .takes_value(true)
+                    .multiple(true)
+                    .help("Search with command")
+                )
             )
             .subcommand(SubCommand::with_name("--delete")
                 .about("Delete bookmark")
@@ -171,12 +182,12 @@ impl ArgParser {
             )
             .subcommand(SubCommand::with_name("--edit")
                 .about("Edit exisiting bookmark")
-                .arg(Arg::with_name("ID")
+                .arg(Arg::with_name("Index")
                     .short("i")
                     .takes_value(true)
-                    .long("id")
+                    .long("index")
                     .required(true)
-                    .help("ID of the bookmark")
+                    .help("Index of the bookmark")
                 )
                 .arg(Arg::with_name("Tags")
                     .short("t")
@@ -199,6 +210,13 @@ impl ArgParser {
                     .multiple(true)
                     .help("New command")
                 )
+                .arg(Arg::with_name("Collection")
+                    // .short("c")
+                    .long("collection")
+                    .takes_value(true)
+                    .multiple(true)
+                    .help("New collection")
+                )
             );
         let matches = app.get_matches_from(inputs);
 
@@ -219,11 +237,18 @@ impl ArgParser {
             if matches.is_present("Tags") {
                 tags = matches.values_of("Tags").unwrap().map(|s| s.to_string()).collect();
             }
-            self.mode = Some(Mode::Add(AddMode {
-                command,
-                annotation,
-                tags
-            }));
+            let mut collection: String = "".to_string();
+            if matches.is_present("Collection") {
+                let vals: Vec<&str> = matches.values_of("Collection").unwrap().collect();
+                collection = vals.join(" ");
+            }
+
+            self.mode = Some(Mode::Add(Bookmark::new(
+                &command,
+                &annotation,
+                &tags,
+                Some(&collection)
+            )));
             return;
         }
 
@@ -238,8 +263,8 @@ impl ArgParser {
 
         // Check if input contains edit command
         if let Some(matches) = matches.subcommand_matches("--edit") {
-            let id: String = matches.values_of("ID").unwrap().collect();
-            let id: usize = id.parse().unwrap();
+            let index: String = matches.values_of("Index").unwrap().collect();
+            let index: usize = index.parse().unwrap();
             let mut command: String = "".to_string();
             if matches.is_present("Command") {
                 let vals: Vec<&str> = matches.values_of("Command").unwrap().collect();
@@ -254,14 +279,17 @@ impl ArgParser {
             if matches.is_present("Tags") {
                 tags = matches.values_of("Tags").unwrap().map(|s| s.to_string()).collect();
             }
-            self.mode = Some(Mode::Edit(EditMode::new(id, command, annotation, tags)));
-            return;
-        }
-
-        // Look for tldr args
-        if matches.is_present("TLDR") {
-            let tldr_page_path = matches.value_of("TLDR").unwrap();
-            self.mode = Some(Mode::Parse(tldr_page_path.to_owned()));
+            let mut collection: String = "".to_string();
+            if matches.is_present("Collection") {
+                let vals: Vec<&str> = matches.values_of("Collection").unwrap().collect();
+                collection = vals.join(" ");
+            }
+            self.mode = Some(Mode::Edit(index, Bookmark::new(
+                &command,
+                &annotation,
+                &tags,
+                Some(&collection)
+            )));
             return;
         }
 
@@ -298,19 +326,3 @@ impl ArgParser {
         self.mode = Some(Mode::Search(search_mode));
     }
 }
-
-
-// fn update_memoire_from_tldr(memoire: &mut Memoire, page_path: &str) {
-//     if let Ok(body) = block_on(download_tldr(page_path)) {
-//         if let Ok(tldr_page) = parse_page(&body) {
-//             let tags = vec![tldr_page.get_command_name().to_string()];
-//             for v in tldr_page.get_examples().into_iter() {
-//                 memoire.add_bookmark(&v.1, &v.0, &tags)
-//             }
-//         } else {
-//             panic!("Failed to parse tldr page at: {:?}", page_path);
-//         }
-//     } else {
-//         panic!("Failed to download tldr page at: {:?}", page_path);
-//     }
-// }
