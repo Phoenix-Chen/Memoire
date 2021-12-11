@@ -1,5 +1,3 @@
-// use crate::memoire;
-
 mod action_list;
 mod input_dialog;
 mod result_table;
@@ -20,7 +18,6 @@ use tui::{
     widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Row, Wrap}
 };
 
-// use memoire::{Bookmark, SearchResult};
 use crate::collection::bookmark::Bookmark;
 use crate::collection::jq::SearchResult;
 

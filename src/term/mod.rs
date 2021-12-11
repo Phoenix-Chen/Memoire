@@ -47,13 +47,10 @@ impl Term {
         }
     }
 
-    /// Pass input into arg_parser then get the results from arg_parser and update result_table
-    // pub fn process_input(&mut self, input: Vec<String>) {
-        // self.arg_parser.matches_input(input);
-        // self.wm
-        //     .update_result_table(
-        //         self.arg_parser.get_results());
-    // }
+    // FIXME: Dislike this approach. consider using setter or set when initialize
+    pub fn get_mut_widget_manager(&mut self) -> &mut WidgetManager {
+        &mut self.wm
+    }
 
     pub fn display(&mut self) -> Result<(), mpsc::RecvError> {
         self.screen.hide_cursor().unwrap();

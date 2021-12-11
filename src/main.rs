@@ -32,17 +32,10 @@ fn main() {
     validate_jsons(&get_collection_dir_path());
 
     let mut term = Term::new();
-    parse_input(env::args().collect());
-    // ArgParser
+    term.get_mut_widget_manager().update_result_table(parse_input(env::args().collect()));
 
     // term.process_input(args);
     term.display();
-    
-    
-    // let search_results: Vec<SearchResult> = jq::search(&collection_dir_path, vec!["grep"]);
-    // for search_result in search_results {
-    //     println!("{}", search_result.get_index());
-    // }
 }
 
 
