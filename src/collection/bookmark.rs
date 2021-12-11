@@ -33,24 +33,12 @@ impl Bookmark {
         &self.command
     }
 
-    pub fn set_command(&mut self, command: &str) {
-        self.command = command.to_string();
-    }
-
     pub fn get_annotation(&self) -> &String {
         &self.annotation
     }
 
-    pub fn set_annotation(&mut self, annotation: &str) {
-        self.annotation = annotation.to_string();
-    }
-
     pub fn get_tags_as_string(&self, delimiter: &str) -> String {
         (&self.tags).join(delimiter)
-    }
-
-    pub fn set_tags(&mut self, tags: &Vec<String>) {
-        self.tags = tags.to_vec();
     }
 
     pub fn get_collection(&self) -> &String {
