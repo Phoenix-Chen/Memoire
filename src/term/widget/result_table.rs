@@ -1,16 +1,12 @@
-use crate::memoire;
+use std::collections::HashSet;
 
-use std::{
-    collections::HashSet,
-    slice::Iter
-};
 use tui::{
     layout::Constraint,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Row, Table, TableState}
 };
 
-use memoire::SearchResult;
+use crate::collection::jq::SearchResult;
 
 
 pub struct ResultTable {
@@ -31,32 +27,39 @@ impl ResultTable {
         ResultTable::new(HashSet::new())
     }
 
-    pub fn update_results(&mut self, results: HashSet<SearchResult>) {
-        self.items = hashset_to_vec(&results);
+    pub fn update_results(&mut self, results: Vec<SearchResult>) {
+        self.items = results;
     }
 
-    pub fn get_widget(&self) -> Table<'_, Iter<'_, &str>, impl Iterator<Item=Row<impl Iterator<Item=String> + '_>>> {
+    pub fn get_widget(&self) -> Table {
         // Define selected style for table row
-        let selected_row_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+        let selected_row_style: Style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
 
         // Set table
-        const HEADER: [&str; 3] = ["Command", "Annotation", "Tags"];
-        let header_style = Style::default().fg(Color::Green).add_modifier(Modifier::BOLD);
-        let rows = self.items.iter().map(
-                |i| Row::StyledData(
-                    i.get_bookmark().to_vec().into_iter(), Style::default().fg(Color::White)
-                )
-            );
-        let t = Table::new(HEADER.iter(), rows)
+        let header: Row = Row::new(
+            ["Command", "Annotation", "Tags", "Collection"]
+        ).style(
+            Style::default().fg(Color::Green)
+                            .add_modifier(Modifier::BOLD)
+        );
+        let body_rows = self.items.iter().map(
+            |i| Row::new(
+                i.get_bookmark().to_vec().into_iter()
+            ).style(
+                Style::default().fg(Color::White)
+            )
+        );
+        let t = Table::new(body_rows)
             .block(Block::default().borders(Borders::ALL).title("Results"))
             .highlight_style(selected_row_style)
             // .highlight_symbol(">> ")
-            .header_style(header_style)
+            .header(header)
             .column_spacing(1)
             .widths(&[
                 Constraint::Percentage(35),
-                Constraint::Percentage(35),
                 Constraint::Percentage(30),
+                Constraint::Percentage(20),
+                Constraint::Percentage(15),
             ]);
         t
     }

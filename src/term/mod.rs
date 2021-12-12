@@ -1,10 +1,7 @@
 extern crate clipboard;
 
-use crate::util;
-use crate::memoire;
-use crate::arg_parser;
-
 mod widget;
+mod event;
 
 use std::{
     io::{stdout, Stdout},
@@ -25,40 +22,37 @@ use tui::{
     Terminal,
 };
 
-use arg_parser::ArgParser;
-use memoire::Memoire;
-use util::event::{Event, Events};
+use event::{Event, Events};
 use widget::{Action, WidgetManager, ACTIONS};
+use crate::collection::{
+    bookmark::Bookmark,
+    jq,
+    util::{get_collection_dir_path, get_json_path},
+};
 
 
 pub struct Term {
     screen: Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>,
     events: Events,
-    memoire: Memoire,
     wm: WidgetManager,
-    arg_parser: ArgParser
 }
 
 
 impl Term {
-    pub fn new(memoire_history: &str) -> Term {
+    pub fn new() -> Term {
         Term {
             screen: Terminal::new(TermionBackend::new(AlternateScreen::from(
                 stdout().into_raw_mode().unwrap(),
             )))
             .unwrap(),
             events: Events::new(),
-            memoire: Memoire::load_from(memoire_history),
             wm: WidgetManager::new(),
-            arg_parser: ArgParser::new()
         }
     }
 
-    /// Pass input into arg_parser then get the results from arg_parser and update result_table
-    pub fn process_input(&mut self, input: Vec<String>) {
-        self.arg_parser.matches_input(input);
-        self.wm
-            .update_result_table(self.arg_parser.get_results(&mut self.memoire));
+    // FIXME: Dislike this approach. consider using setter or set when initialize
+    pub fn get_mut_widget_manager(&mut self) -> &mut WidgetManager {
+        &mut self.wm
     }
 
     pub fn display(&mut self) -> Result<(), mpsc::RecvError> {
@@ -72,11 +66,7 @@ impl Term {
                     Key::Ctrl('a') => {
                         if self.wm.get_cur_focus() != "input_dialog" {
                             self.wm.reset_result_table_state();
-                            self.wm.set_input_dialog(vec![
-                                ("command".to_string(), "".to_string()),
-                                ("annotation".to_string(), "".to_string()),
-                                ("tags".to_string(), "".to_string()),
-                            ]);
+                            self.wm.set_input_dialog(Bookmark::default("", "", &vec![]).to_tuple_vec());
                             self.wm.set_cur_focus("input_dialog");
                         }
                     }
@@ -97,19 +87,26 @@ impl Term {
                                                 break;
                                             }
                                             Action::Edit => {
-                                                self.update_input_dialog();
+                                                self.wm.update_input_dialog();
                                                 self.wm.set_cur_focus("input_dialog");
                                             }
                                             Action::Delete => {
-                                                match self.wm.get_selected_item_id() {
-                                                    Some(id) => {
-                                                        self.memoire.remove_bookmark(id);
-                                                        self.wm.update_result_table(self.memoire.all());
+                                                match self.wm.get_selected_item_index() {
+                                                    Some(index) => {
+                                                        jq::delete(
+                                                            &get_json_path(self.wm.get_selected_item_collection()),
+                                                            index
+                                                        );
+                                                        self.wm.update_result_table(jq::search(
+                                                            &get_collection_dir_path(),
+                                                            &vec![self.wm.get_selected_item_collection()]
+                                                        ))
                                                     },
                                                     None => {}  // Add error log
                                                 }
                                                 self.wm.reset_action_list_state();
                                                 self.wm.reset_result_table_state();
+                                                
                                                 self.wm.set_cur_focus("result_table");
                                             }
                                         }
@@ -125,52 +122,38 @@ impl Term {
                                 None => {}
                             },
                             "input_dialog" => {
-                                let inputs = self.wm.get_input_dialog_inputs();
-                                let mut common_args: Vec<String> = Vec::new();
-                                for input in inputs.into_iter() {
-                                    // TODO: research extend_from_slice
-                                    common_args.append(
-                                        &mut vec![
-                                            format!("{}{}", "--", input.0),
-                                            input.1.to_owned()
-                                        ]
-                                    );
-                                }
-                                // Split tags
-                                let mut tags: Vec<String> = match common_args.pop() {
-                                    Some(tags_str) => {
-                                        tags_str.split(',').map(|tag| {
-                                            tag.trim().to_owned()
-                                        }).collect()
-                                    },
-                                    None => {
-                                        // Log error here
-                                        panic!("No inputs from input_dialog")
-                                    }
-                                };
-                                common_args.append(&mut tags);
-                                let new_args = match self.wm.get_selected_item_id() {
-                                    Some(id) => {  // Edit
-                                        let mut edit_args = vec![
-                                            "memoire".to_owned(),
-                                            "--edit".to_owned(),
-                                            "--id".to_owned(),
-                                            id.to_string()
-                                        ];
-                                        edit_args.append(&mut common_args);
-                                        edit_args
+                                let bookmark = dialog_inputs_to_bookmark(
+                                    self.wm.get_input_dialog_inputs()
+                                );
+                                match self.wm.get_selected_item_index() {
+                                    Some(index) => {  // Edit
+                                        jq::delete(
+                                            &get_json_path(self.wm.get_selected_item_collection()),
+                                            index
+                                        );
+                                        jq::add(
+                                            &get_json_path(&bookmark.get_collection()),
+                                            &bookmark,
+                                            Some(index)
+                                        );
                                     },
                                     None => {  // Add
-                                        let mut add_args = vec![
-                                            "memoire".to_owned(),
-                                            "--add".to_owned()
-                                        ];
-                                        add_args.append(&mut common_args);
-                                        add_args
+                                        jq::add(
+                                            &get_json_path(&bookmark.get_collection()),
+                                            &bookmark,
+                                            None
+                                        );
                                     }
                                 };
-                                self.process_input(new_args);
                                 self.wm.reset_action_list_state();
+                                self.wm.reset_result_table_state();
+                                self.wm.update_result_table(
+                                    // update this to search by only tag
+                                    jq::search(
+                                        &get_collection_dir_path(),
+                                        &vec![&bookmark.get_collection()]
+                                    )
+                                );
                                 self.wm.set_cur_focus("result_table");
                             }
                             _ => {}
@@ -291,10 +274,13 @@ impl Term {
             }
         ).unwrap();
     }
+}
 
-    /// Update input_dialog from the current chosen bookmark in result_table
-    fn update_input_dialog(&mut self) {
-        let inputs = self.wm.get_selected_item_as_tuple();
-        self.wm.set_input_dialog(inputs);
-    }
+fn dialog_inputs_to_bookmark(inputs: &Vec<(String, String)>) -> Bookmark {
+    Bookmark::new(
+        &inputs[0].1, 
+        &inputs[1].1,
+        &inputs[2].1.split(',').map(|s| s.to_string()).collect(),
+        &inputs[3].1
+    )
 }

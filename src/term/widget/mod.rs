@@ -1,5 +1,3 @@
-use crate::memoire;
-
 mod action_list;
 mod input_dialog;
 mod result_table;
@@ -9,19 +7,16 @@ use result_table::ResultTable;
 pub use action_list::Action;
 pub use action_list::ACTIONS;
 
-use std::{
-    collections::{HashMap, HashSet},
-    slice::Iter
-};
+use std::collections::HashMap;
 
 use tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Row, Wrap}
+    widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Wrap}
 };
 
-use memoire::{Bookmark, SearchResult};
-
+use crate::collection::bookmark::Bookmark;
+use crate::collection::jq::SearchResult;
 
 enum Widget {
     ActionList(ActionList),
@@ -49,14 +44,19 @@ impl WidgetManager {
     }
 
     /// Update result_table with passed input
-    pub fn update_result_table(&mut self, results: HashSet<SearchResult>) {
-        let result_table = self.get_mut_result_table();
-        result_table.update_results(results);
+    pub fn update_result_table(&mut self, results: Vec<SearchResult>) {
+        self.get_mut_result_table().update_results(results);
     }
 
     /// Reset the state of result_table
     pub fn reset_result_table_state(&mut self) {
         self.get_mut_result_table().reset_state();
+    }
+
+    pub fn update_input_dialog(&mut self) {
+        let result_table = self.get_result_table();
+        let inputs = result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().to_tuple_vec();
+        self.set_input_dialog(inputs);
     }
 
     /// Returns a mutable reference to the result_table
@@ -84,7 +84,7 @@ impl WidgetManager {
     }
 
     /// Returns a tui::widgets::Table from result_table
-    pub fn get_result_table_widget(&self) -> Table<'_, Iter<'_, &str>, impl Iterator<Item=Row<impl Iterator<Item=String> + '_>>> {
+    pub fn get_result_table_widget(&self) -> Table {
         self.get_result_table().get_widget()
     }
 
@@ -97,26 +97,26 @@ impl WidgetManager {
         self.get_result_table_state().selected()
     }
 
-    pub fn get_selected_item_id(&self) -> Option<usize> {
+    pub fn get_selected_item_index(&self) -> Option<usize> {
         let result_table = self.get_result_table();
         match result_table.state.selected() {
             Some(state) => {
-                Some(result_table.get_item(state).get_id())
+                Some(result_table.get_item(state).get_index())
             },
-            None =>{
+            None => {
                 None
             }
         }
     }
 
+    pub fn get_selected_item_collection(&self) -> &str {
+        let result_table = self.get_result_table();
+        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_collection()
+    }
+
     pub fn get_selected_item_command(&self) -> &str {
         let result_table = self.get_result_table();
         result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_command()
-    }
-
-    pub fn get_selected_item_as_tuple(&self) -> Vec<(String, String)> {
-        let result_table = self.get_result_table();
-        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().to_tuple_vec()
     }
 
     fn get_action_list(&self) -> &ActionList {
@@ -279,7 +279,7 @@ impl WidgetManager {
 }
 
 
-fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans>{
+fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans> {
     vec![
         Spans::from(vec![
             Span::styled("Command: ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
@@ -292,6 +292,10 @@ fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans>{
         Spans::from(vec![
             Span::styled("Tags: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::styled(bookmark.get_tags_as_string(", "), Style::default().fg(Color::Yellow))
+        ]),
+        Spans::from(vec![
+            Span::styled("Collection: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_collection(), Style::default().fg(Color::Cyan))
         ]),
     ]
 }
