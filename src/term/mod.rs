@@ -146,6 +146,7 @@ impl Term {
                                     }
                                 };
                                 self.wm.reset_action_list_state();
+                                self.wm.reset_result_table_state();
                                 self.wm.update_result_table(
                                     // update this to search by only tag
                                     jq::search(

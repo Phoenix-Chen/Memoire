@@ -45,8 +45,7 @@ impl WidgetManager {
 
     /// Update result_table with passed input
     pub fn update_result_table(&mut self, results: Vec<SearchResult>) {
-        let result_table = self.get_mut_result_table();
-        result_table.update_results(results);
+        self.get_mut_result_table().update_results(results);
     }
 
     /// Reset the state of result_table
@@ -104,7 +103,7 @@ impl WidgetManager {
             Some(state) => {
                 Some(result_table.get_item(state).get_index())
             },
-            None =>{
+            None => {
                 None
             }
         }

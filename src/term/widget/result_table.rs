@@ -43,12 +43,12 @@ impl ResultTable {
                             .add_modifier(Modifier::BOLD)
         );
         let body_rows = self.items.iter().map(
-                |i| Row::new(
-                    i.get_bookmark().to_vec().into_iter()
-                ).style(
-                    Style::default().fg(Color::White)
-                )
-            );
+            |i| Row::new(
+                i.get_bookmark().to_vec().into_iter()
+            ).style(
+                Style::default().fg(Color::White)
+            )
+        );
         let t = Table::new(body_rows)
             .block(Block::default().borders(Borders::ALL).title("Results"))
             .highlight_style(selected_row_style)
