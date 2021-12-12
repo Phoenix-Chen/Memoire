@@ -20,13 +20,17 @@ impl Bookmark {
     /// * `annotation` - A string slice that holds the annotation
     /// * `tags` - A list of String that represents the tags
     /// * `collection` - A string slice that holds the collection
-    pub fn new(command: &str, annotation: &str, tags: &Vec<String>, collection: Option<&str>) -> Bookmark {
+    pub fn new(command: &str, annotation: &str, tags: &Vec<String>, collection: &str) -> Bookmark {
         Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
             tags: tags.clone(),
-            collection: collection.unwrap_or(DEFAULT_JSON_NAME).to_string(),  // whether this logic should be here?
+            collection: collection.to_string(),
         }
+    }
+
+    pub fn default(command: &str, annotation: &str, tags: &Vec<String>) -> Bookmark {
+        Bookmark::new(command, annotation, tags, &DEFAULT_JSON_NAME)
     }
 
     pub fn get_command(&self) -> &String {

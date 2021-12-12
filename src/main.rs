@@ -203,14 +203,14 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
                 &command,
                 &annotation,
                 &tags,
-                Some(&collection)
+                &collection
             ),
             None
         );
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![collection]
+            &vec![&collection]
         );
     }
 
@@ -223,7 +223,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![collection]
+            &vec![&collection]
         );
     }
 
@@ -258,27 +258,24 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
                 &command,
                 &annotation,
                 &tags,
-                Some(&collection)
+                &collection
             ),
             Some(index)
         );
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![collection]
+            &vec![&collection]
         );
     }
 
     // Look for search args
     let args: Vec<&str> = vec!["Search", "Annotation", "Command", "Tags", "Collection"];
-    let mut keywords: Vec<String> = Vec::new();
+    let mut keywords: Vec<&str> = Vec::new();
     for arg in args.iter() {
         if matches.is_present(arg) {
             keywords.append(
-                &mut matches.values_of(arg)
-                            .unwrap()
-                            .map(|s| s.to_string())
-                            .collect()
+                &mut matches.values_of(arg).unwrap().collect()
             );
         }
     }
@@ -287,7 +284,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
     }
     // Return all results if no args passed
     if keywords.len() == 0 {
-        keywords.push("".to_string());
+        keywords.push("");
     }
     search(
         &get_collection_dir_path(),

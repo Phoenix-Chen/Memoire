@@ -1,9 +1,5 @@
-// use crate::memoire;
+use std::collections::HashSet;
 
-use std::{
-    collections::HashSet,
-    slice::Iter
-};
 use tui::{
     layout::Constraint,
     style::{Color, Modifier, Style},

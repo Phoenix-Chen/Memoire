@@ -7,15 +7,12 @@ use result_table::ResultTable;
 pub use action_list::Action;
 pub use action_list::ACTIONS;
 
-use std::{
-    collections::{HashMap, HashSet},
-    slice::Iter
-};
+use std::collections::HashMap;
 
 use tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Row, Wrap}
+    widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Wrap}
 };
 
 use crate::collection::bookmark::Bookmark;
@@ -55,6 +52,12 @@ impl WidgetManager {
     /// Reset the state of result_table
     pub fn reset_result_table_state(&mut self) {
         self.get_mut_result_table().reset_state();
+    }
+
+    pub fn update_input_dialog(&mut self) {
+        let result_table = self.get_result_table();
+        let inputs = result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().to_tuple_vec();
+        self.set_input_dialog(inputs);
     }
 
     /// Returns a mutable reference to the result_table
@@ -112,15 +115,9 @@ impl WidgetManager {
         result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_collection()
     }
 
-
     pub fn get_selected_item_command(&self) -> &str {
         let result_table = self.get_result_table();
         result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_command()
-    }
-
-    pub fn get_selected_item_as_tuple(&self) -> Vec<(String, String)> {
-        let result_table = self.get_result_table();
-        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().to_tuple_vec()
     }
 
     fn get_action_list(&self) -> &ActionList {
