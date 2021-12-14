@@ -30,9 +30,9 @@ impl SearchResult {
 pub fn add(json_path: &str, bookmark: &Bookmark, index: Option<usize>) {
     write_to_json(json_path, Some(&execute_bash(
         &format!(
-            "cat {} | jq -s '.[0] |= .+ [{}] | .[0]'",
+            "cat {} | jq -s $'.[0] |= .+ [{}] | .[0]'",
             json_path,
-            serde_json::to_string(&bookmark).expect("Unable to parse bookmarks")
+            serde_json::to_string(&bookmark).expect("Unable to parse bookmarks").replace("'", "\\'")
         )
     )));
 }
