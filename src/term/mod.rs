@@ -22,7 +22,7 @@ use tui::{
     Terminal,
 };
 
-use event::{Event, Events};
+use event::events;
 use widget::{Action, WidgetManager, ACTIONS};
 use crate::collection::{
     bookmark::Bookmark,
@@ -33,7 +33,7 @@ use crate::collection::{
 
 pub struct Term {
     screen: Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>,
-    events: Events,
+    events: mpsc::Receiver<Key>,
     wm: WidgetManager,
 }
 
@@ -45,7 +45,7 @@ impl Term {
                 stdout().into_raw_mode().unwrap(),
             )))
             .unwrap(),
-            events: Events::new(),
+            events: events(),
             wm: WidgetManager::new(),
         }
     }
@@ -60,133 +60,131 @@ impl Term {
         loop {
             self.draw();
 
-            if let Event::Input(input) = self.events.next()? {
-                match input {
-                    Key::Ctrl('c') => break,  // Need to match exit_key in util::event for consistent behavior
-                    Key::Ctrl('a') => {
-                        if self.wm.get_cur_focus() != "input_dialog" {
-                            self.wm.reset_result_table_state();
-                            self.wm.set_input_dialog(Bookmark::default("", "", &vec![]).to_tuple_vec());
-                            self.wm.set_cur_focus("input_dialog");
-                        }
+            match self.events.recv()? {
+                Key::Ctrl('c') => break,  // Need to match exit_key in util::event for consistent behavior
+                Key::Ctrl('a') => {
+                    if self.wm.get_cur_focus() != "input_dialog" {
+                        self.wm.reset_result_table_state();
+                        self.wm.set_input_dialog(Bookmark::default("", "", &vec![]).to_tuple_vec());
+                        self.wm.set_cur_focus("input_dialog");
                     }
-                    Key::Char('\n') => {
-                        match self.wm.get_cur_focus() {
-                            "action_list" => {
-                                match self.wm.get_action_list_state_selected() {
-                                    Some(action_index) => {
-                                        match ACTIONS[action_index] {
-                                            Action::Copy => {
-                                                let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                                                ctx.set_contents(
-                                                    self.wm
-                                                        .get_selected_item_command()
-                                                        .to_owned(),
-                                                )
-                                                .unwrap();
-                                                break;
+                }
+                Key::Char('\n') => {
+                    match self.wm.get_cur_focus() {
+                        "action_list" => {
+                            match self.wm.get_action_list_state_selected() {
+                                Some(action_index) => {
+                                    match ACTIONS[action_index] {
+                                        Action::Copy => {
+                                            let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+                                            ctx.set_contents(
+                                                self.wm
+                                                    .get_selected_item_command()
+                                                    .to_owned(),
+                                            )
+                                            .unwrap();
+                                            break;
+                                        }
+                                        Action::Edit => {
+                                            self.wm.update_input_dialog();
+                                            self.wm.set_cur_focus("input_dialog");
+                                        }
+                                        Action::Delete => {
+                                            match self.wm.get_selected_item_index() {
+                                                Some(index) => {
+                                                    jq::delete(
+                                                        &get_json_path(self.wm.get_selected_item_collection()),
+                                                        index
+                                                    );
+                                                    self.wm.update_result_table(jq::search(
+                                                        &get_collection_dir_path(),
+                                                        &vec![self.wm.get_selected_item_collection()]
+                                                    ))
+                                                },
+                                                None => {}  // Add error log
                                             }
-                                            Action::Edit => {
-                                                self.wm.update_input_dialog();
-                                                self.wm.set_cur_focus("input_dialog");
-                                            }
-                                            Action::Delete => {
-                                                match self.wm.get_selected_item_index() {
-                                                    Some(index) => {
-                                                        jq::delete(
-                                                            &get_json_path(self.wm.get_selected_item_collection()),
-                                                            index
-                                                        );
-                                                        self.wm.update_result_table(jq::search(
-                                                            &get_collection_dir_path(),
-                                                            &vec![self.wm.get_selected_item_collection()]
-                                                        ))
-                                                    },
-                                                    None => {}  // Add error log
-                                                }
-                                                self.wm.reset_action_list_state();
-                                                self.wm.reset_result_table_state();
-                                                
-                                                self.wm.set_cur_focus("result_table");
-                                            }
+                                            self.wm.reset_action_list_state();
+                                            self.wm.reset_result_table_state();
+                                            
+                                            self.wm.set_cur_focus("result_table");
                                         }
                                     }
-                                    None => {}
-                                }
-                            }
-                            "result_table" => match self.wm.get_result_table_state_selected() {
-                                Some(_) => {
-                                    self.wm.set_cur_focus("action_list");
-                                    self.wm.key_down();
                                 }
                                 None => {}
-                            },
-                            "input_dialog" => {
-                                let bookmark = dialog_inputs_to_bookmark(
-                                    self.wm.get_input_dialog_inputs()
-                                );
-                                match self.wm.get_selected_item_index() {
-                                    Some(index) => {  // Edit
-                                        jq::delete(
-                                            &get_json_path(self.wm.get_selected_item_collection()),
-                                            index
-                                        );
-                                        jq::add(
-                                            &get_json_path(&bookmark.get_collection()),
-                                            &bookmark,
-                                            Some(index)
-                                        );
-                                    },
-                                    None => {  // Add
-                                        jq::add(
-                                            &get_json_path(&bookmark.get_collection()),
-                                            &bookmark,
-                                            None
-                                        );
-                                    }
-                                };
-                                self.wm.reset_action_list_state();
-                                self.wm.reset_result_table_state();
-                                self.wm.update_result_table(
-                                    // update this to search by only tag
-                                    jq::search(
-                                        &get_collection_dir_path(),
-                                        &vec![&bookmark.get_collection()]
-                                    )
-                                );
-                                self.wm.set_cur_focus("result_table");
                             }
-                            _ => {}
                         }
-                    }
-                    Key::Char('\t') => {
-                        // Overwrite tab behavior in input mode
-                        if self.wm.get_cur_focus() == "input_dialog" {
-                            self.wm.update_input_dialog_input(' ');
+                        "result_table" => match self.wm.get_result_table_state_selected() {
+                            Some(_) => {
+                                self.wm.set_cur_focus("action_list");
+                                self.wm.key_down();
+                            }
+                            None => {}
+                        },
+                        "input_dialog" => {
+                            let bookmark = dialog_inputs_to_bookmark(
+                                self.wm.get_input_dialog_inputs()
+                            );
+                            match self.wm.get_selected_item_index() {
+                                Some(index) => {  // Edit
+                                    jq::delete(
+                                        &get_json_path(self.wm.get_selected_item_collection()),
+                                        index
+                                    );
+                                    jq::add(
+                                        &get_json_path(&bookmark.get_collection()),
+                                        &bookmark,
+                                        Some(index)
+                                    );
+                                },
+                                None => {  // Add
+                                    jq::add(
+                                        &get_json_path(&bookmark.get_collection()),
+                                        &bookmark,
+                                        None
+                                    );
+                                }
+                            };
+                            self.wm.reset_action_list_state();
+                            self.wm.reset_result_table_state();
+                            self.wm.update_result_table(
+                                // update this to search by only tag
+                                jq::search(
+                                    &get_collection_dir_path(),
+                                    &vec![&bookmark.get_collection()]
+                                )
+                            );
+                            self.wm.set_cur_focus("result_table");
                         }
+                        _ => {}
                     }
-                    Key::Char(character) => {
-                        if self.wm.get_cur_focus() == "input_dialog" {
-                            self.wm.update_input_dialog_input(character);
-                        }
-                    }
-                    Key::Up => {
-                        self.wm.key_up();
-                    }
-                    Key::Down => {
-                        self.wm.key_down();
-                    }
-                    Key::Left => {
-                        self.wm.key_left();
-                    }
-                    Key::Right => {
-                        self.wm.key_right();
-                    }
-                    Key::Backspace => {
-                        self.wm.key_backspace();
-                    }
-                    _ => {}
                 }
+                Key::Char('\t') => {
+                    // Overwrite tab behavior in input mode
+                    if self.wm.get_cur_focus() == "input_dialog" {
+                        self.wm.update_input_dialog_input(' ');
+                    }
+                }
+                Key::Char(character) => {
+                    if self.wm.get_cur_focus() == "input_dialog" {
+                        self.wm.update_input_dialog_input(character);
+                    }
+                }
+                Key::Up => {
+                    self.wm.key_up();
+                }
+                Key::Down => {
+                    self.wm.key_down();
+                }
+                Key::Left => {
+                    self.wm.key_left();
+                }
+                Key::Right => {
+                    self.wm.key_right();
+                }
+                Key::Backspace => {
+                    self.wm.key_backspace();
+                }
+                _ => {}
             }
         }
 

@@ -1,4 +1,3 @@
-extern crate termion;
 extern crate dirs;
 
 use std::{
