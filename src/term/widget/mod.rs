@@ -1,11 +1,6 @@
 mod action_list;
 mod input_dialog;
 mod result_table;
-use action_list::ActionList;
-use input_dialog::InputDialog;
-use result_table::ResultTable;
-pub use action_list::Action;
-pub use action_list::ACTIONS;
 
 use std::collections::HashMap;
 
@@ -17,6 +12,12 @@ use tui::{
 
 use crate::collection::bookmark::Bookmark;
 use crate::collection::jq::SearchResult;
+use action_list::ActionList;
+use input_dialog::InputDialog;
+use result_table::ResultTable;
+pub use action_list::Action;
+pub use action_list::ACTIONS;
+
 
 enum Widget {
     ActionList(ActionList),
@@ -31,15 +32,20 @@ pub struct WidgetManager {
 }
 
 
+const ACTION_LIST: &str = "action_list";
+const INPUT_DIALOG: &str = "input_dialog";
+const RESULT_TABLE: &str = "result_table";
+
+
 impl WidgetManager {
     pub fn new() -> WidgetManager {
         let mut widgets: HashMap<String, Widget> = HashMap::new();
-        widgets.insert("action_list".to_string(), Widget::ActionList(ActionList::new(ACTIONS.to_vec())));
-        widgets.insert("input_dialog".to_string(), Widget::InputDialog(InputDialog::new(vec![])));
-        widgets.insert("result_table".to_string(), Widget::ResultTable(ResultTable::default()));
+        widgets.insert(ACTION_LIST.to_string(), Widget::ActionList(ActionList::new(ACTIONS.to_vec())));
+        widgets.insert(INPUT_DIALOG.to_string(), Widget::InputDialog(InputDialog::new(vec![])));
+        widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
         WidgetManager {
             widgets,
-            cur_focus: "result_table".to_string()
+            cur_focus: RESULT_TABLE.to_string()
         }
     }
 
@@ -61,7 +67,7 @@ impl WidgetManager {
 
     /// Returns a mutable reference to the result_table
     fn get_mut_result_table(&mut self) -> &mut ResultTable {
-        match self.widgets.get_mut("result_table").unwrap() {
+        match self.widgets.get_mut(RESULT_TABLE).unwrap() {
             Widget::ResultTable(result_table) => {
                 result_table
             },
@@ -73,7 +79,7 @@ impl WidgetManager {
 
     /// Returns an immutable reference to result_table
     fn get_result_table(&self) -> &ResultTable {
-        match self.widgets.get("result_table").unwrap() {
+        match self.widgets.get(RESULT_TABLE).unwrap() {
             Widget::ResultTable(result_table) => {
                 result_table
             },
@@ -118,7 +124,7 @@ impl WidgetManager {
     }
 
     fn get_action_list(&self) -> &ActionList {
-        match self.widgets.get("action_list").unwrap() {
+        match self.widgets.get(ACTION_LIST).unwrap() {
             Widget::ActionList(action_list) => {
                 action_list
             },
@@ -129,7 +135,7 @@ impl WidgetManager {
     }
 
     fn get_mut_action_list(&mut self) -> &mut ActionList {
-        match self.widgets.get_mut("action_list").unwrap() {
+        match self.widgets.get_mut(ACTION_LIST).unwrap() {
             Widget::ActionList(action_list) => {
                 action_list
             },
@@ -156,7 +162,7 @@ impl WidgetManager {
     }
 
     fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
-        match self.widgets.get_mut("input_dialog").unwrap() {
+        match self.widgets.get_mut(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
             },
@@ -167,7 +173,7 @@ impl WidgetManager {
     }
 
     pub fn get_input_dialog(&self) -> &InputDialog {
-        match self.widgets.get("input_dialog").unwrap() {
+        match self.widgets.get(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
             },
@@ -264,7 +270,7 @@ impl WidgetManager {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
             Widget::ActionList(action_list) => {
                 action_list.reset();
-                self.set_cur_focus("result_table");
+                self.set_cur_focus(RESULT_TABLE);
             },
             Widget::InputDialog(input_dialog) => {
                 input_dialog.backspace();
