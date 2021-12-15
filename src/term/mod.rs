@@ -72,53 +72,48 @@ impl Term {
                 Key::Char('\n') => {
                     match self.wm.get_cur_focus() {
                         "action_list" => {
-                            match self.wm.get_action_list_state_selected() {
-                                Some(action_index) => {
-                                    match ACTIONS[action_index] {
-                                        Action::Copy => {
-                                            let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                                            ctx.set_contents(
-                                                self.wm
-                                                    .get_selected_item_command()
-                                                    .to_owned(),
-                                            )
-                                            .unwrap();
-                                            break;
+                            if let Some(action_index) = self.wm.get_action_list_state_selected() {
+                                match ACTIONS[action_index] {
+                                    Action::Copy => {
+                                        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+                                        ctx.set_contents(
+                                            self.wm
+                                                .get_selected_item_command()
+                                                .to_owned(),
+                                        )
+                                        .unwrap();
+                                        break;
+                                    }
+                                    Action::Edit => {
+                                        self.wm.update_input_dialog();
+                                        self.wm.set_cur_focus("input_dialog");
+                                    }
+                                    Action::Delete => {
+                                        match self.wm.get_selected_item_index() {
+                                            Some(index) => {
+                                                jq::delete(
+                                                    &get_json_path(self.wm.get_selected_item_collection()),
+                                                    index
+                                                );
+                                                self.wm.update_result_table(jq::search(
+                                                    &get_collection_dir_path(),
+                                                    &[self.wm.get_selected_item_collection()]
+                                                ))
+                                            },
+                                            None => {}  // Add error log
                                         }
-                                        Action::Edit => {
-                                            self.wm.update_input_dialog();
-                                            self.wm.set_cur_focus("input_dialog");
-                                        }
-                                        Action::Delete => {
-                                            match self.wm.get_selected_item_index() {
-                                                Some(index) => {
-                                                    jq::delete(
-                                                        &get_json_path(self.wm.get_selected_item_collection()),
-                                                        index
-                                                    );
-                                                    self.wm.update_result_table(jq::search(
-                                                        &get_collection_dir_path(),
-                                                        &vec![self.wm.get_selected_item_collection()]
-                                                    ))
-                                                },
-                                                None => {}  // Add error log
-                                            }
-                                            self.wm.reset_action_list_state();
-                                            self.wm.reset_result_table_state();
-                                            
-                                            self.wm.set_cur_focus("result_table");
-                                        }
+                                        self.wm.reset_action_list_state();
+                                        self.wm.reset_result_table_state();
+                                        
+                                        self.wm.set_cur_focus("result_table");
                                     }
                                 }
-                                None => {}
+                                
                             }
                         }
-                        "result_table" => match self.wm.get_result_table_state_selected() {
-                            Some(_) => {
-                                self.wm.set_cur_focus("action_list");
-                                self.wm.key_down();
-                            }
-                            None => {}
+                        "result_table" => if self.wm.get_result_table_state_selected().is_some() {
+                            self.wm.set_cur_focus("action_list");
+                            self.wm.key_down();
                         },
                         "input_dialog" => {
                             let bookmark = dialog_inputs_to_bookmark(
@@ -131,14 +126,14 @@ impl Term {
                                         index
                                     );
                                     jq::add(
-                                        &get_json_path(&bookmark.get_collection()),
+                                        &get_json_path(bookmark.get_collection()),
                                         &bookmark,
                                         Some(index)
                                     );
                                 },
                                 None => {  // Add
                                     jq::add(
-                                        &get_json_path(&bookmark.get_collection()),
+                                        &get_json_path(bookmark.get_collection()),
                                         &bookmark,
                                         None
                                     );
@@ -150,7 +145,7 @@ impl Term {
                                 // update this to search by only tag
                                 jq::search(
                                     &get_collection_dir_path(),
-                                    &vec![&bookmark.get_collection()]
+                                    &[bookmark.get_collection()]
                                 )
                             );
                             self.wm.set_cur_focus("result_table");
@@ -235,15 +230,12 @@ impl Term {
                         f.render_widget(
                             paragraph, inner_layout[i]
                         );
-                        match input_dialog_cur_input_ind {
-                            Some(i) => {
-                                // FIXME: calc (cursor_length)/(screen_width - 2)
-                                f.set_cursor(
-                                    inner_layout[i].x + input_dialog_cursor + 1,
-                                    inner_layout[i].y + 1
-                                );
-                            },
-                            None => {}
+                        if let Some(i) = input_dialog_cur_input_ind {
+                            // FIXME: calc (cursor_length)/(screen_width - 2)
+                            f.set_cursor(
+                                inner_layout[i].x + input_dialog_cursor + 1,
+                                inner_layout[i].y + 1
+                            );
                         }
                     }
                 } else {
@@ -278,7 +270,7 @@ fn dialog_inputs_to_bookmark(inputs: &Vec<(String, String)>) -> Bookmark {
     Bookmark::new(
         &replace_special_chars(&inputs[0].1), 
         &replace_special_chars(&inputs[1].1),
-        &inputs[2].1.split(',').map(|s| replace_special_chars(&s)).collect(),
+        &inputs[2].1.split(',').map(|s| replace_special_chars(s)).collect(),
         &replace_special_chars(&inputs[3].1)
     )
 }

@@ -21,7 +21,7 @@ impl InputDialog {
     }
 
     pub fn set_inputs(&mut self, inputs: Vec<(String, String)>) {
-        if inputs.len() > 0 {
+        if !inputs.is_empty() {
             self.cur_input = Some(0);
             self.cursor_ind = inputs[0].1.len();
         } else {
@@ -40,15 +40,12 @@ impl InputDialog {
                             .borders(Borders::ALL)
                     )
                     .wrap(Wrap { trim: true });
-                match self.cur_input {
-                    Some(cur_input) => {
-                        if cur_input == index {
-                            paragraph = paragraph.style(
-                                Style::default().fg(Color::Yellow)
-                            );
-                        }
-                    },
-                    None => {}
+                if let Some(cur_input) = self.cur_input {
+                    if cur_input == index {
+                        paragraph = paragraph.style(
+                            Style::default().fg(Color::Yellow)
+                        );
+                    }
                 }
                 paragraph
             }
@@ -61,18 +58,15 @@ impl InputDialog {
     }
 
     pub fn update_input(&mut self, character: char) {
-        match self.cur_input {
-            Some(ind) => {
-                let mut new_input = self.inputs[ind].1.to_owned();
-                // FIXME: Check new_input size in case of overflow
-                new_input.insert(self.cursor_ind, character);
-                self.cursor_ind += 1;
-                self.inputs[ind] = (
-                    self.inputs[ind].0.to_owned(),
-                    new_input
-                )
-            },
-            None => {}
+        if let Some(ind) = self.cur_input {
+            let mut new_input = self.inputs[ind].1.to_owned();
+            // FIXME: Check new_input size in case of overflow
+            new_input.insert(self.cursor_ind, character);
+            self.cursor_ind += 1;
+            self.inputs[ind] = (
+                self.inputs[ind].0.to_owned(),
+                new_input
+            )
         }
     }
 
@@ -81,65 +75,48 @@ impl InputDialog {
     }
 
     pub fn backspace(&mut self) {
-        match self.cur_input {
-            Some(ind) => {
-                if self.cursor_ind > 0 {
-                    self.cursor_ind -= 1;
-                    let mut new_input = self.inputs[ind].1.to_owned();
-                    new_input.remove(self.cursor_ind);
-                    self.inputs[ind] = (
-                        self.inputs[ind].0.to_owned(),
-                        new_input
-                    )
-                }
-            },
-            None => {}
+        if let Some(ind) = self.cur_input {
+            if self.cursor_ind > 0 {
+                self.cursor_ind -= 1;
+                let mut new_input = self.inputs[ind].1.to_owned();
+                new_input.remove(self.cursor_ind);
+                self.inputs[ind] = (
+                    self.inputs[ind].0.to_owned(),
+                    new_input
+                )
+            }
         }
     }
 
     pub fn left(&mut self) {
-        match self.cur_input {
-            Some(_) => {
-                if self.cursor_ind > 0 {
-                    self.cursor_ind -= 1;
-                }
-            },
-            None => {}
+        if self.cur_input.is_some() && self.cursor_ind > 0 {
+            self.cursor_ind -= 1;
         }
     }
 
     pub fn right(&mut self) {
-        match self.cur_input {
-            Some(ind) => {
-                if self.cursor_ind < self.inputs[ind].1.len() {
-                    self.cursor_ind += 1;
-                }
-            },
-            None => {}
+        if let Some(ind) = self.cur_input {
+            if self.cursor_ind < self.inputs[ind].1.len() {
+                self.cursor_ind += 1;
+            }
         }
     }
 
     pub fn up(&mut self) {
-        match self.cur_input {
-            Some(ind) => {
-                if ind > 0 {
-                    self.cur_input = Some(ind - 1);
-                    self.cursor_ind = self.inputs[ind - 1].1.len();
-                }
-            },
-            None => {}
+        if let Some(ind) = self.cur_input {
+            if ind > 0 {
+                self.cur_input = Some(ind - 1);
+                self.cursor_ind = self.inputs[ind - 1].1.len();
+            }
         }
     }
 
     pub fn down(&mut self) {
-        match self.cur_input {
-            Some(ind) => {
-                if ind < self.inputs.len() - 1 {
-                    self.cur_input = Some(ind + 1);
-                    self.cursor_ind = self.inputs[ind + 1].1.len();
-                }
-            },
-            None => {}
+        if let Some(ind) = self.cur_input {
+            if ind < self.inputs.len() - 1 {
+                self.cur_input = Some(ind + 1);
+                self.cursor_ind = self.inputs[ind + 1].1.len();
+            }
         }
     }
 

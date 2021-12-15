@@ -55,7 +55,7 @@ impl WidgetManager {
 
     pub fn update_input_dialog(&mut self) {
         let result_table = self.get_result_table();
-        let inputs = result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().to_tuple_vec();
+        let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_tuple_vec();
         self.set_input_dialog(inputs);
     }
 
@@ -99,24 +99,22 @@ impl WidgetManager {
 
     pub fn get_selected_item_index(&self) -> Option<usize> {
         let result_table = self.get_result_table();
-        match result_table.state.selected() {
-            Some(state) => {
-                Some(result_table.get_item(state).get_index())
-            },
-            None => {
-                None
-            }
-        }
+        result_table.get_state()
+                    .selected()
+                    .map(
+                        |state| result_table.get_item(state)
+                                            .get_index()
+                    )
     }
 
     pub fn get_selected_item_collection(&self) -> &str {
         let result_table = self.get_result_table();
-        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_collection()
+        result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().get_collection()
     }
 
     pub fn get_selected_item_command(&self) -> &str {
         let result_table = self.get_result_table();
-        result_table.get_item(result_table.state.selected().unwrap()).get_bookmark().get_command()
+        result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().get_command()
     }
 
     fn get_action_list(&self) -> &ActionList {
@@ -251,16 +249,14 @@ impl WidgetManager {
     }
 
     pub fn key_left(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::InputDialog(input_dialog) => input_dialog.left(),
-            _ => {}
+        if let Widget::InputDialog(input_dialog) = self.widgets.get_mut(&self.cur_focus).unwrap() {
+            input_dialog.left()
         }
     }
 
     pub fn key_right(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::InputDialog(input_dialog) => input_dialog.right(),
-            _ => {}
+        if let Widget::InputDialog(input_dialog) = self.widgets.get_mut(&self.cur_focus).unwrap() {
+            input_dialog.right()
         }
     }
 

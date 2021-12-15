@@ -24,7 +24,7 @@ impl Display for Action {
 pub const ACTIONS: [Action; 3] = [Action::Copy, Action::Edit, Action::Delete];
 
 pub struct ActionList {
-    pub state: ListState,
+    state: ListState,
     items: Vec<String>
 }
 
@@ -59,13 +59,10 @@ impl ActionList {
     }
 
     pub fn up(&mut self) {
-        match self.state.selected() {
-            Some(ind) => {
-                if ind > 0 {
-                    self.state.select(Some(ind - 1));
-                }
-            },
-            None => {}
+        if let Some(ind) = self.state.selected() {
+            if ind > 0 {
+                self.state.select(Some(ind - 1));
+            }
         }
     }
 
@@ -77,7 +74,7 @@ impl ActionList {
                 }
             },
             None => {
-                if self.items.len() > 0 {
+                if !self.items.is_empty() {
                     self.state.select(Some(0));
                 }
             }

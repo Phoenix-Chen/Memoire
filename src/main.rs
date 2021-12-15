@@ -209,7 +209,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![&collection]
+            &[&collection]
         );
     }
 
@@ -222,7 +222,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![&collection]
+            &[&collection]
         );
     }
 
@@ -264,7 +264,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
         // TODO: Fix this to only search keyword by collection
         return search(
             &get_collection_dir_path(),
-            &vec![&collection]
+            &[&collection]
         );
     }
 
@@ -282,7 +282,7 @@ fn parse_input(inputs: Vec<String>) -> Vec<SearchResult> {
         // search_mode.set_union(false);
     }
     // Return all results if no args passed
-    if keywords.len() == 0 {
+    if keywords.is_empty() {
         keywords.push("");
     }
     search(

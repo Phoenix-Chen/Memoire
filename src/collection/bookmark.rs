@@ -24,13 +24,13 @@ impl Bookmark {
         Bookmark {
             command: command.to_string(),
             annotation: annotation.to_string(),
-            tags: tags.clone(),
+            tags: tags.to_owned(),
             collection: collection.to_string(),
         }
     }
 
     pub fn default(command: &str, annotation: &str, tags: &Vec<String>) -> Bookmark {
-        Bookmark::new(command, annotation, tags, &DEFAULT_JSON_NAME)
+        Bookmark::new(command, annotation, tags, DEFAULT_JSON_NAME)
     }
 
     pub fn get_command(&self) -> &String {

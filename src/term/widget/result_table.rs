@@ -10,7 +10,7 @@ use crate::collection::jq::SearchResult;
 
 
 pub struct ResultTable {
-    pub state: TableState,
+    state: TableState,
     items: Vec<SearchResult>,
 }
 
@@ -52,7 +52,6 @@ impl ResultTable {
         let t = Table::new(body_rows)
             .block(Block::default().borders(Borders::ALL).title("Results"))
             .highlight_style(selected_row_style)
-            // .highlight_symbol(">> ")
             .header(header)
             .column_spacing(1)
             .widths(&[
@@ -65,13 +64,10 @@ impl ResultTable {
     }
 
     pub fn up(&mut self) {
-        match self.state.selected() {
-            Some(ind) => {
-                if ind > 0 {
-                    self.state.select(Some(ind - 1));
-                }
-            },
-            None => {}
+        if let Some(ind) = self.state.selected() {
+            if ind > 0 {
+                self.state.select(Some(ind - 1));
+            }
         }
     }
 
@@ -83,7 +79,7 @@ impl ResultTable {
                 }
             },
             None => {
-                if self.items.len() > 0 {
+                if !self.items.is_empty() {
                     self.state.select(Some(0));
                 }
             }
@@ -99,7 +95,7 @@ impl ResultTable {
     }
 
     pub fn get_item(&self, ind: usize) -> &SearchResult {
-        return &self.items[ind]
+        &self.items[ind]
     }
 }
 

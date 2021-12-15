@@ -49,7 +49,7 @@ pub fn delete(json_path: &str, index: usize) {
 }
 
 
-pub fn search(dir_path: &str, keywords: &Vec<&str>) -> Vec<SearchResult> {
+pub fn search(dir_path: &str, keywords: &[&str]) -> Vec<SearchResult> {
     json_to_search_results(
         &execute_bash(
             &build_lookup_command(dir_path, keywords)
@@ -74,7 +74,7 @@ fn execute_bash(command: &str) -> String {
 
 
 fn json_to_search_results(json: &str) -> Vec<SearchResult> {
-    match serde_json::from_str(&json) {
+    match serde_json::from_str(json) {
         Ok(v) => v,
         Err(_err) => {
             println!("Failed to parse json: {:?}", &json);
@@ -84,7 +84,7 @@ fn json_to_search_results(json: &str) -> Vec<SearchResult> {
 }
 
 
-fn build_select(keywords: &Vec<&str>) -> String {
+fn build_select(keywords: &[&str]) -> String {
     let conditions: Vec<String> = keywords.iter().map(|keyword| {
         let contains: String = format!("contains(\"{}\")", keyword);
         [
@@ -102,7 +102,7 @@ fn build_select(keywords: &Vec<&str>) -> String {
 }
 
 
-fn build_lookup_command(dir_path: &str, keywords: &Vec<&str>) -> String {
+fn build_lookup_command(dir_path: &str, keywords: &[&str]) -> String {
     format!("cat {}/*.json | jq -s '\
             [\
                 map(to_entries | \
