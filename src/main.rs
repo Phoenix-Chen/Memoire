@@ -34,7 +34,6 @@ fn main() {
     let mut term = Term::new();
     term.get_mut_widget_manager().update_result_table(parse_input(env::args().collect()));
 
-    // term.process_input(args);
     term.display();
 }
 

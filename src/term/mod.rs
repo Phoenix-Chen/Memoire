@@ -276,9 +276,13 @@ impl Term {
 
 fn dialog_inputs_to_bookmark(inputs: &Vec<(String, String)>) -> Bookmark {
     Bookmark::new(
-        &inputs[0].1, 
-        &inputs[1].1,
-        &inputs[2].1.split(',').map(|s| s.to_string()).collect(),
-        &inputs[3].1
+        &replace_special_chars(&inputs[0].1), 
+        &replace_special_chars(&inputs[1].1),
+        &inputs[2].1.split(',').map(|s| replace_special_chars(&s)).collect(),
+        &replace_special_chars(&inputs[3].1)
     )
+}
+
+fn replace_special_chars(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
 }
