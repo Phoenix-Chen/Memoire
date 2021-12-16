@@ -59,7 +59,7 @@ impl Input {
 
     pub fn right(&mut self) {
         if let Some(ind) = self.cursor_ind {
-            if ind < self.input.len() {
+            if ind < self.get_input().len() {
                 self.cursor_ind = Some(ind + 1);
             }
         }
