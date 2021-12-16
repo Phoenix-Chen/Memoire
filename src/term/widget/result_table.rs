@@ -66,9 +66,9 @@ impl ResultTable {
             .column_spacing(1)
             .widths(&[
                 Constraint::Percentage(35),
-                Constraint::Percentage(30),
+                Constraint::Percentage(25),
                 Constraint::Percentage(20),
-                Constraint::Percentage(15),
+                Constraint::Percentage(20),
             ]);
         t
     }
