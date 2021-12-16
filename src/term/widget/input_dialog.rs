@@ -103,10 +103,6 @@ impl Input {
         &self.name
     }
 
-    pub fn get_cursor_index(&self) -> usize {
-        self.cursor_ind.unwrap()
-    }
-
     pub fn set_input(&mut self, input: &str) {
         self.input = input.to_string();
         self.input.push(' ');  // Extra space for cursor
@@ -181,10 +177,6 @@ impl InputDialog {
 
     pub fn update_input(&mut self, character: char) {
         self.inputs[self.cur_input.unwrap()].update_input(character);
-    }
-
-    pub fn get_cursor(&self) -> usize {
-        self.inputs[self.cur_input.unwrap()].get_cursor_index()
     }
 
     pub fn backspace(&mut self) {

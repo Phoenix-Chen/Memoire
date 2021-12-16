@@ -227,16 +227,8 @@ impl WidgetManager {
         self.get_input_dialog().get_inputs_size()
     }
 
-    pub fn get_input_dialog_cur_input_ind(&self) -> Option<usize> {
-        self.get_input_dialog().get_cur_input_ind()
-    }
-
     pub fn get_input_dialog_inputs(&self) -> Vec<String> {
         self.get_input_dialog().get_inputs_as_strings()
-    }
-
-    pub fn get_input_dialog_cursor(&self) -> usize {
-        self.get_input_dialog().get_cursor()
     }
 
     pub fn update_input_dialog_input(&mut self, character: char) {
