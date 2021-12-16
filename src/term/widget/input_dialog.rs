@@ -43,7 +43,7 @@ impl Input {
     pub fn backspace(&mut self) {
         if let Some(ind) = self.cursor_ind {
             if ind > 0 {
-                self.input.remove(ind);
+                self.input.remove(ind - 1);  // Subtract 1 due to cursor index
                 self.cursor_ind = Some(ind - 1);
             }
         }
