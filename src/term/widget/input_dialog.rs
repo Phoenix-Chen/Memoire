@@ -75,7 +75,7 @@ impl Input {
                 ),
                 Span::styled(
                     &self.input[index..index+1],
-                    Style::default().bg(Color::White)
+                    Style::default().bg(Color::White).fg(Color::Black)
                 ),
                 Span::styled(
                     &self.input[index+1..],

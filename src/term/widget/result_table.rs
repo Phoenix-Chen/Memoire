@@ -43,13 +43,13 @@ impl ResultTable {
 
     pub fn get_widget(&self) -> Table {
         // Define selected style for table row
-        let selected_row_style: Style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+        let selected_row_style: Style = Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD);
 
         // Set table
         let header: Row = Row::new(
             ["Command", "Annotation", "Tags", "Collection"]
         ).style(
-            Style::default().fg(Color::Green)
+            Style::default().fg(Color::LightGreen)
                             .add_modifier(Modifier::BOLD)
         );
         let body_rows = self.items.iter().map(
@@ -110,9 +110,5 @@ impl ResultTable {
 }
 
 fn hashset_to_vec(results: &HashSet<SearchResult>) -> Vec<SearchResult> {
-    let mut v = Vec::new();
-    for r in results.iter() {
-        v.push(r.to_owned());
-    }
-    v
+    results.iter().map(|result| result.to_owned()).collect()
 }

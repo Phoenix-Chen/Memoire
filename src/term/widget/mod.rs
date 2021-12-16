@@ -312,20 +312,20 @@ impl WidgetManager {
 fn bookmark_to_spans(bookmark: &Bookmark) -> Vec<Spans> {
     vec![
         Spans::from(vec![
-            Span::styled("Command: ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
-            Span::styled(bookmark.get_command(), Style::default().fg(Color::Red))
+            Span::styled("Command: ", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_command(), Style::default().fg(Color::LightRed))
         ]),
         Spans::from(vec![
-            Span::styled("Annotation: ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
-            Span::styled(bookmark.get_annotation(), Style::default().fg(Color::Green))
+            Span::styled("Annotation: ", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_annotation(), Style::default().fg(Color::LightGreen))
         ]),
         Spans::from(vec![
-            Span::styled("Tags: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-            Span::styled(bookmark.get_tags_as_string(", "), Style::default().fg(Color::Yellow))
+            Span::styled("Tags: ", Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_tags_as_string(", "), Style::default().fg(Color::LightYellow))
         ]),
         Spans::from(vec![
-            Span::styled("Collection: ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-            Span::styled(bookmark.get_collection(), Style::default().fg(Color::Cyan))
+            Span::styled("Collection: ", Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)),
+            Span::styled(bookmark.get_collection(), Style::default().fg(Color::LightMagenta))
         ]),
     ]
 }
