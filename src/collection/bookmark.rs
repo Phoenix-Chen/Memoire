@@ -42,7 +42,7 @@ impl Bookmark {
     }
 
     pub fn get_tags_as_string(&self, delimiter: &str) -> String {
-        (&self.tags).join(delimiter)
+        (self.tags).join(delimiter)
     }
 
     pub fn get_collection(&self) -> &String {
@@ -53,17 +53,8 @@ impl Bookmark {
         vec![
             self.command.to_string(),
             self.annotation.to_string(),
-            self.get_tags_as_string(" "),
+            self.get_tags_as_string(", "),
             self.collection.to_string(),
-        ]
-    }
-
-    pub fn to_tuple_vec(&self) -> Vec<(String, String)> {
-        vec![
-            ("command".to_string(), self.command.to_string()),
-            ("annotation".to_string(), self.annotation.to_string()),
-            ("tags".to_string(), self.get_tags_as_string(", ")),
-            ("collection".to_string(), self.collection.to_string()),
         ]
     }
 }

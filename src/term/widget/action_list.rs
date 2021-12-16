@@ -7,6 +7,8 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, ListState}
 };
 
+use super::widget_trait::WidgetTrait;
+
 
 #[derive(Clone, Debug)]
 pub enum Action {
@@ -26,6 +28,17 @@ pub const ACTIONS: [Action; 3] = [Action::Copy, Action::Edit, Action::Delete];
 pub struct ActionList {
     state: ListState,
     items: Vec<String>
+}
+
+
+impl WidgetTrait for ActionList {
+    fn on_focus(&mut self) {
+        self.state.select(Some(0))
+    }
+
+    fn on_blur(&mut self) {
+        self.state.select(None);
+    }
 }
 
 

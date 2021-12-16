@@ -23,7 +23,7 @@ use tui::{
 };
 
 use event::events;
-use widget::{Action, WidgetManager, ACTIONS};
+use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE};
 use crate::collection::{
     bookmark::Bookmark,
     jq,
@@ -61,17 +61,13 @@ impl Term {
             self.draw();
 
             match self.events.recv()? {
-                Key::Ctrl('c') => break,  // Need to match exit_key in util::event for consistent behavior
+                Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
-                    if self.wm.get_cur_focus() != "input_dialog" {
-                        self.wm.reset_result_table_state();
-                        self.wm.set_input_dialog(Bookmark::default("", "", &vec![]).to_tuple_vec());
-                        self.wm.set_cur_focus("input_dialog");
-                    }
+                    self.wm.set_cur_focus(INPUT_DIALOG);
                 }
                 Key::Char('\n') => {
                     match self.wm.get_cur_focus() {
-                        "action_list" => {
+                        ACTION_LIST => {
                             if let Some(action_index) = self.wm.get_action_list_state_selected() {
                                 match ACTIONS[action_index] {
                                     Action::Copy => {
@@ -85,8 +81,8 @@ impl Term {
                                         break;
                                     }
                                     Action::Edit => {
-                                        self.wm.update_input_dialog();
-                                        self.wm.set_cur_focus("input_dialog");
+                                        self.wm.update_input_dialog_from_result_table();
+                                        self.wm.set_cur_focus(INPUT_DIALOG);
                                     }
                                     Action::Delete => {
                                         match self.wm.get_selected_item_index() {
@@ -105,17 +101,16 @@ impl Term {
                                         self.wm.reset_action_list_state();
                                         self.wm.reset_result_table_state();
                                         
-                                        self.wm.set_cur_focus("result_table");
+                                        self.wm.set_cur_focus(RESULT_TABLE);
                                     }
                                 }
                                 
                             }
                         }
-                        "result_table" => if self.wm.get_result_table_state_selected().is_some() {
-                            self.wm.set_cur_focus("action_list");
-                            self.wm.key_down();
+                        RESULT_TABLE => if self.wm.get_result_table_state_selected().is_some() {
+                            self.wm.set_cur_focus(ACTION_LIST);
                         },
-                        "input_dialog" => {
+                        INPUT_DIALOG => {
                             let bookmark = dialog_inputs_to_bookmark(
                                 self.wm.get_input_dialog_inputs()
                             );
@@ -191,8 +186,8 @@ impl Term {
         // For render input dialog
         let input_size = self.wm.get_input_dialog_input_size();
         let paragraphs = self.wm.get_input_dialog_widgets();
-        let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
-        let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
+        // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
+        // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
         let result_table_widget = self.wm.get_result_table_widget();
         let result_table_state = self.wm.get_result_table_state();
@@ -230,13 +225,13 @@ impl Term {
                         f.render_widget(
                             paragraph, inner_layout[i]
                         );
-                        if let Some(i) = input_dialog_cur_input_ind {
-                            // FIXME: calc (cursor_length)/(screen_width - 2)
-                            f.set_cursor(
-                                inner_layout[i].x + input_dialog_cursor + 1,
-                                inner_layout[i].y + 1
-                            );
-                        }
+                        // if let Some(i) = input_dialog_cur_input_ind {
+                        //     // FIXME: calc (cursor_length)/(screen_width - 2)
+                        //     f.set_cursor(
+                        //         inner_layout[i].x + input_dialog_cursor + 1,
+                        //         inner_layout[i].y + 1
+                        //     );
+                        // }
                     }
                 } else {
                     // The most outer top and bottom rectangles
@@ -266,12 +261,12 @@ impl Term {
     }
 }
 
-fn dialog_inputs_to_bookmark(inputs: &Vec<(String, String)>) -> Bookmark {
+fn dialog_inputs_to_bookmark(inputs: Vec<String>) -> Bookmark {
     Bookmark::new(
-        &replace_special_chars(&inputs[0].1), 
-        &replace_special_chars(&inputs[1].1),
-        &inputs[2].1.split(',').map(|s| replace_special_chars(s)).collect(),
-        &replace_special_chars(&inputs[3].1)
+        &replace_special_chars(&inputs[0]), 
+        &replace_special_chars(&inputs[1]),
+        &inputs[2].split(',').map(|s| replace_special_chars(s).trim().to_owned()).collect(),
+        &replace_special_chars(&inputs[3])
     )
 }
 

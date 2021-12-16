@@ -1,6 +1,7 @@
 mod action_list;
 mod input_dialog;
 mod result_table;
+mod widget_trait;
 
 use std::collections::HashMap;
 
@@ -13,16 +14,36 @@ use tui::{
 use crate::collection::bookmark::Bookmark;
 use crate::collection::jq::SearchResult;
 use action_list::ActionList;
-use input_dialog::InputDialog;
+use input_dialog::{Input, InputDialog};
 use result_table::ResultTable;
 pub use action_list::Action;
 pub use action_list::ACTIONS;
+use widget_trait::WidgetTrait;
 
 
 enum Widget {
     ActionList(ActionList),
     ResultTable(ResultTable),
     InputDialog(InputDialog)
+}
+
+impl WidgetTrait for Widget {
+    // TODO: Must be a cleaner way
+    fn on_focus(&mut self) {
+        match self {
+            Widget::ActionList(action_list) => action_list.on_focus(),
+            Widget::InputDialog(input_dialog) => input_dialog.on_focus(),
+            Widget::ResultTable(result_table) => result_table.on_focus()
+        }
+    }
+
+    fn on_blur(&mut self) {
+        match self {
+            Widget::ActionList(action_list) => action_list.on_blur(),
+            Widget::InputDialog(input_dialog) => input_dialog.on_blur(),
+            Widget::ResultTable(result_table) => result_table.on_blur()
+        }
+    }
 }
 
 
@@ -32,16 +53,27 @@ pub struct WidgetManager {
 }
 
 
-const ACTION_LIST: &str = "action_list";
-const INPUT_DIALOG: &str = "input_dialog";
-const RESULT_TABLE: &str = "result_table";
+pub const ACTION_LIST: &str = "action_list";
+pub const INPUT_DIALOG: &str = "input_dialog";
+pub const RESULT_TABLE: &str = "result_table";
 
 
 impl WidgetManager {
     pub fn new() -> WidgetManager {
         let mut widgets: HashMap<String, Widget> = HashMap::new();
-        widgets.insert(ACTION_LIST.to_string(), Widget::ActionList(ActionList::new(ACTIONS.to_vec())));
-        widgets.insert(INPUT_DIALOG.to_string(), Widget::InputDialog(InputDialog::new(vec![])));
+        widgets.insert(
+            ACTION_LIST.to_string(),
+            Widget::ActionList(
+                ActionList::new(ACTIONS.to_vec())
+            )
+        );
+        
+        widgets.insert(
+            INPUT_DIALOG.to_string(),
+            Widget::InputDialog(
+                InputDialog::new(vec!["Command", "Annotation", "Tags", "Collection"])
+            )
+        );
         widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
         WidgetManager {
             widgets,
@@ -59,9 +91,9 @@ impl WidgetManager {
         self.get_mut_result_table().reset_state();
     }
 
-    pub fn update_input_dialog(&mut self) {
+    pub fn update_input_dialog_from_result_table(&mut self) {
         let result_table = self.get_result_table();
-        let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_tuple_vec();
+        let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_vec();
         self.set_input_dialog(inputs);
     }
 
@@ -183,11 +215,11 @@ impl WidgetManager {
         }
     }
 
-    pub fn get_input_dialog_widgets(&self) -> Vec<Paragraph<'_>> {
+    pub fn get_input_dialog_widgets(&self) -> Vec<Paragraph> {
         self.get_input_dialog().get_widgets()
     }
 
-    pub fn set_input_dialog(&mut self, inputs: Vec<(String, String)>) {
+    pub fn set_input_dialog(&mut self, inputs: Vec<String>) {
         self.get_mut_input_dialog().set_inputs(inputs);
     }
 
@@ -199,8 +231,8 @@ impl WidgetManager {
         self.get_input_dialog().get_cur_input_ind()
     }
 
-    pub fn get_input_dialog_inputs(&self) -> &Vec<(String, String)> {
-        self.get_input_dialog().get_inputs()
+    pub fn get_input_dialog_inputs(&self) -> Vec<String> {
+        self.get_input_dialog().get_inputs_as_strings()
     }
 
     pub fn get_input_dialog_cursor(&self) -> usize {
@@ -229,8 +261,12 @@ impl WidgetManager {
     }
 
     // Set the current on focus widget to the the passed string slices
-    pub fn set_cur_focus(&mut self, cur_focus: &str) {
-        self.cur_focus = cur_focus.to_owned();
+    pub fn set_cur_focus(&mut self, new_focus: &str) {
+        if self.cur_focus != new_focus {
+            self.widgets.get_mut(&self.cur_focus).unwrap().on_blur();
+            self.widgets.get_mut(new_focus).unwrap().on_focus();
+            self.cur_focus = new_focus.to_owned();
+        }
     }
 
     // Returns a string slices of current on focus widget

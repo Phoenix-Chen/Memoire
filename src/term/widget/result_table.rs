@@ -7,6 +7,7 @@ use tui::{
 };
 
 use crate::collection::jq::SearchResult;
+use super::widget_trait::WidgetTrait;
 
 
 pub struct ResultTable {
@@ -14,6 +15,15 @@ pub struct ResultTable {
     items: Vec<SearchResult>,
 }
 
+impl WidgetTrait for ResultTable {
+    fn on_focus(&mut self) {
+
+    }
+
+    fn on_blur(&mut self) {
+        // self.state = TableState::default();
+    }
+}
 
 impl ResultTable {
     pub fn new(results: HashSet<SearchResult>) -> ResultTable {
