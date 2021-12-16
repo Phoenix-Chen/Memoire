@@ -94,7 +94,7 @@ impl WidgetManager {
     pub fn update_input_dialog_from_result_table(&mut self) {
         let result_table = self.get_result_table();
         let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_vec();
-        self.set_input_dialog(inputs);
+        self.get_mut_input_dialog().set_inputs(inputs);
     }
 
     /// Returns a mutable reference to the result_table
@@ -217,10 +217,6 @@ impl WidgetManager {
 
     pub fn get_input_dialog_widgets(&self) -> Vec<Paragraph> {
         self.get_input_dialog().get_widgets()
-    }
-
-    pub fn set_input_dialog(&mut self, inputs: Vec<String>) {
-        self.get_mut_input_dialog().set_inputs(inputs);
     }
 
     pub fn get_input_dialog_input_size(&self) -> usize {
