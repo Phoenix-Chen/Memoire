@@ -18,7 +18,8 @@ use termion::{
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
-    widgets::{Paragraph, Wrap},
+    style::{Color, Style},
+    widgets::{Paragraph, Wrap, Block, Borders},
     Terminal,
 };
 
@@ -143,7 +144,7 @@ impl Term {
                                     &[bookmark.get_collection()]
                                 )
                             );
-                            self.wm.set_cur_focus("result_table");
+                            self.wm.set_cur_focus(RESULT_TABLE);
                         }
                         _ => {}
                     }
@@ -185,6 +186,8 @@ impl Term {
         let cur_focus = self.wm.get_cur_focus();
         // For render input dialog
         let input_size = self.wm.get_input_dialog_input_size();
+        let input_titles = self.wm.get_input_dialog().get_inputs_names();
+        let cur_focus_input = self.wm.get_input_dialog().get_cur_input_ind();
         let paragraphs = self.wm.get_input_dialog_widgets();
         // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
         // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
@@ -196,7 +199,7 @@ impl Term {
         let action_list_state = self.wm.get_action_list_state();
         self.screen.draw(
             |f| {
-                if cur_focus == "input_dialog" {
+                if cur_focus == INPUT_DIALOG {
                     let mut constraints: Vec<Constraint> = Vec::new();
                     for _ in 0..input_size {
                         constraints.push(
@@ -223,7 +226,23 @@ impl Term {
 
                     for (i, paragraph) in paragraphs.into_iter().enumerate() {
                         f.render_widget(
-                            paragraph, inner_layout[i]
+                            paragraph.block(
+                                Block::default().title(
+                                    input_titles[i].to_owned()
+                                ).borders(Borders::ALL)
+                            ).style(
+                                // FIXME: Must be a cleaner way
+                                if let Some(cur_input_index) = cur_focus_input {
+                                    if i == cur_input_index {
+                                        Style::default().fg(Color::LightYellow)
+                                    } else {
+                                        Style::default().fg(Color::White)
+                                    }
+                                } else {
+                                    Style::default().fg(Color::White)
+                                }
+                            ),
+                            inner_layout[i]
                         );
                         // if let Some(i) = input_dialog_cur_input_ind {
                         //     // FIXME: calc (cursor_length)/(screen_width - 2)
