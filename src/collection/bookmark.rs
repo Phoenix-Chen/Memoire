@@ -29,8 +29,8 @@ impl Bookmark {
         }
     }
 
-    pub fn default(command: &str, annotation: &str, tags: &Vec<String>) -> Bookmark {
-        Bookmark::new(command, annotation, tags, DEFAULT_JSON_NAME)
+    pub fn default() -> Bookmark {
+        Bookmark::new("", "", &Vec::new(), DEFAULT_JSON_NAME)
     }
 
     pub fn get_command(&self) -> &String {

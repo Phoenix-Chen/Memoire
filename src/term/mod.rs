@@ -65,12 +65,7 @@ impl Term {
                 Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
                     self.wm.get_mut_input_dialog().set_inputs(
-                        vec![
-                            "".to_owned(),
-                            "".to_owned(),
-                            "".to_owned(),
-                            "default".to_owned()
-                        ]
+                        Bookmark::default().to_vec()
                     );
                     self.wm.set_cur_focus(INPUT_DIALOG);
                 }
@@ -249,7 +244,8 @@ impl Term {
                                 } else {
                                     Style::default().fg(Color::White)
                                 }
-                            ).wrap(Wrap { trim: false }),
+                            ),
+                            // ).wrap(Wrap { trim: false }),  // FIXME
                             inner_layout[i]
                         );
                         // if let Some(i) = input_dialog_cur_input_ind {
