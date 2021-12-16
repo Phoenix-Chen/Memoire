@@ -193,7 +193,7 @@ impl WidgetManager {
         self.get_mut_action_list().reset();
     }
 
-    fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
+    pub fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
         match self.widgets.get_mut(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
