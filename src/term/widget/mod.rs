@@ -80,6 +80,11 @@ impl WidgetManager {
                         " > ",
                         Style::default().fg(Color::LightYellow)
                     )
+                ).placeholder(
+                    Span::styled(
+                        "Type to search | Arrow to move | Enter to select | Backspace to go back",
+                        Style::default().fg(Color::Gray)
+                    )
                 )
             )
         );

@@ -13,7 +13,7 @@ pub struct Input {
     input: String,
     cursor_ind: Option<usize>,
     prefix: Option<Span<'static>>,
-    // TODO: implement placeholder
+    placeholder: Option<Span<'static>>,
 }
 
 
@@ -69,7 +69,8 @@ impl Input {
             name: name.to_string(),
             input: " ".to_owned(), // Extra space for cursor
             cursor_ind: None,
-            prefix: None
+            prefix: None,
+            placeholder: None
         }
     }
 
@@ -78,10 +79,21 @@ impl Input {
         self
     }
 
+    pub fn placeholder(mut self, placeholder: Span<'static>) -> Input {
+        self.placeholder = Some(placeholder);
+        self
+    }
+
     fn get_text(&self) -> Spans {
         let mut spans: Vec<Span> = Vec::new();
         if let Some(span) = &self.prefix {
-            spans.push(span.clone())
+            spans.push(span.clone());
+        }
+        if let Some(span) = &self.placeholder {
+            if self.get_input().len() == 0 {
+                spans.push(span.clone());
+                return Spans::from(spans);
+            }
         }
         // Note use self.input directly here for cursor highlight
         match self.cursor_ind {
