@@ -16,15 +16,42 @@ pub struct Input {
     // TODO: implement placeholder
 }
 
+
 impl WidgetTrait for Input {
-    fn on_focus (&mut self) {
+    fn on_focus(&mut self) {
         self.cursor_ind = Some(self.input.len() - 1)
     }
 
-    fn on_blur (&mut self) {
+    fn on_blur(&mut self) {
         self.cursor_ind = None;
     }
+
+    fn key_left(&mut self) {
+        if let Some(ind) = self.cursor_ind {
+            if ind > 0 {
+                self.cursor_ind = Some(ind - 1);
+            }
+        }
+    }
+
+    fn key_right(&mut self) {
+        if let Some(ind) = self.cursor_ind {
+            if ind < self.get_input().len() {
+                self.cursor_ind = Some(ind + 1);
+            }
+        }
+    }
+
+    fn key_backspace(&mut self) {
+        if let Some(ind) = self.cursor_ind {
+            if ind > 0 {
+                self.input.remove(ind - 1);  // Subtract 1 due to cursor index
+                self.cursor_ind = Some(ind - 1);
+            }
+        }
+    }
 }
+
 
 impl Input {
     pub fn new(name: &str) -> Input {
@@ -45,31 +72,6 @@ impl Input {
         if let Some(ind) = self.cursor_ind {
             self.input.insert(ind, character);
             self.cursor_ind = Some(ind + 1)
-        }
-    }
-
-    pub fn backspace(&mut self) {
-        if let Some(ind) = self.cursor_ind {
-            if ind > 0 {
-                self.input.remove(ind - 1);  // Subtract 1 due to cursor index
-                self.cursor_ind = Some(ind - 1);
-            }
-        }
-    }
-
-    pub fn left(&mut self) {
-        if let Some(ind) = self.cursor_ind {
-            if ind > 0 {
-                self.cursor_ind = Some(ind - 1);
-            }
-        }
-    }
-
-    pub fn right(&mut self) {
-        if let Some(ind) = self.cursor_ind {
-            if ind < self.get_input().len() {
-                self.cursor_ind = Some(ind + 1);
-            }
         }
     }
 
@@ -138,9 +140,39 @@ impl WidgetTrait for InputDialog {
         self.update_input_focus();
     }
 
-    fn on_blur (&mut self) {
+    fn on_blur(&mut self) {
         self.cur_input = None;
         self.update_input_focus();
+    }
+
+    fn key_up(&mut self) {
+        if let Some(ind) = self.cur_input {
+            if ind > 0 {
+                self.cur_input = Some(ind - 1);
+                self.update_input_focus();
+            }
+        }
+    }
+
+    fn key_down(&mut self) {
+        if let Some(ind) = self.cur_input {
+            if ind < self.inputs.len() - 1 {
+                self.cur_input = Some(ind + 1);
+                self.update_input_focus();
+            }
+        }
+    }
+
+    fn key_left(&mut self) {
+        self.inputs[self.cur_input.unwrap()].key_left();
+    }
+
+    fn key_right(&mut self) {
+        self.inputs[self.cur_input.unwrap()].key_right();
+    }
+
+    fn key_backspace(&mut self) {
+        self.inputs[self.cur_input.unwrap()].key_backspace();
     }
 }
 
@@ -163,26 +195,6 @@ impl InputDialog {
     }
 
     pub fn get_widgets(&self) -> Vec<Paragraph> {
-        // let paragraphs: Vec<Paragraph> = self.inputs.clone().into_iter().enumerate().map(
-        //     |(index, (key, val))| {
-        //         let mut paragraph = Paragraph::new(val)
-        //             .block(
-        //                 Block::default()
-        //                     .title(key)
-        //                     .borders(Borders::ALL)
-        //             )
-        //             .wrap(Wrap { trim: true });
-        //         if let Some(cur_input) = self.cur_input {
-        //             if cur_input == index {
-        //                 paragraph = paragraph.style(
-        //                     Style::default().fg(Color::Yellow)
-        //                 );
-        //             }
-        //         }
-        //         paragraph
-        //     }
-        // ).collect();
-        // paragraphs
         (&self.inputs).into_iter().map(|input| input.get_widget()).collect()        
     }
 
@@ -192,36 +204,6 @@ impl InputDialog {
 
     pub fn update_input(&mut self, character: char) {
         self.inputs[self.cur_input.unwrap()].update_input(character);
-    }
-
-    pub fn backspace(&mut self) {
-        self.inputs[self.cur_input.unwrap()].backspace();
-    }
-
-    pub fn left(&mut self) {
-        self.inputs[self.cur_input.unwrap()].left();
-    }
-
-    pub fn right(&mut self) {
-        self.inputs[self.cur_input.unwrap()].right();
-    }
-
-    pub fn up(&mut self) {
-        if let Some(ind) = self.cur_input {
-            if ind > 0 {
-                self.cur_input = Some(ind - 1);
-                self.update_input_focus();
-            }
-        }
-    }
-
-    pub fn down(&mut self) {
-        if let Some(ind) = self.cur_input {
-            if ind < self.inputs.len() - 1 {
-                self.cur_input = Some(ind + 1);
-                self.update_input_focus();
-            }
-        }
     }
 
     pub fn get_cur_input_ind(&self) -> Option<usize> {

@@ -92,7 +92,6 @@ impl WidgetManager {
         widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
         WidgetManager {
             widgets,
-            // cur_focus: SEARCH_BAR.to_string()
             cur_focus: RESULT_TABLE.to_string()
         }
     }
@@ -333,9 +332,9 @@ impl WidgetManager {
 
     pub fn key_up(&mut self) {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ActionList(action_list) => action_list.up(),
-            Widget::ResultTable(result_table) => result_table.up(),
-            Widget::InputDialog(input_dialog) => input_dialog.up(),
+            Widget::ActionList(action_list) => action_list.key_up(),
+            Widget::ResultTable(result_table) => result_table.key_up(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_up(),
             Widget::SearchBar(_) => {
                 self.set_cur_focus(RESULT_TABLE);
                 self.key_up();
@@ -345,9 +344,9 @@ impl WidgetManager {
 
     pub fn key_down(&mut self) {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ActionList(action_list) => action_list.down(),
-            Widget::ResultTable(result_table) => result_table.down(),
-            Widget::InputDialog(input_dialog) => input_dialog.down(),
+            Widget::ActionList(action_list) => action_list.key_down(),
+            Widget::ResultTable(result_table) => result_table.key_down(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_down(),
             Widget::SearchBar(_) => {
                 self.set_cur_focus(RESULT_TABLE);
                 self.key_down();
@@ -361,10 +360,11 @@ impl WidgetManager {
                 self.set_cur_focus(SEARCH_BAR);
                 self.key_left();
             },
-            Widget::InputDialog(input_dialog) => input_dialog.left(),
-            Widget::SearchBar(input) => input.left(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_left(),
+            Widget::SearchBar(input) => input.key_left(),
             _ => {}
         }
+
     }
 
     pub fn key_right(&mut self) {
@@ -373,8 +373,8 @@ impl WidgetManager {
                 self.set_cur_focus(SEARCH_BAR);
                 self.key_right();
             },
-            Widget::InputDialog(input_dialog) => input_dialog.right(),
-            Widget::SearchBar(input) => input.right(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_right(),
+            Widget::SearchBar(input) => input.key_right(),
             _ => {}
         }
     }
@@ -386,10 +386,10 @@ impl WidgetManager {
                 self.set_cur_focus(RESULT_TABLE);
             },
             Widget::InputDialog(input_dialog) => {
-                input_dialog.backspace();
+                input_dialog.key_backspace();
             },
             Widget::SearchBar(input) => {
-                input.backspace();
+                input.key_backspace();
                 self.update_result_table_from_search_bar();
             },
             Widget::ResultTable(_) => {

@@ -16,12 +16,27 @@ pub struct ResultTable {
 }
 
 impl WidgetTrait for ResultTable {
-    fn on_focus(&mut self) {
-
+    fn key_up(&mut self) {
+        if let Some(ind) = self.state.selected() {
+            if ind > 0 {
+                self.state.select(Some(ind - 1));
+            }
+        }
     }
 
-    fn on_blur(&mut self) {
-        // self.state = TableState::default();
+    fn key_down(&mut self) {
+        match self.state.selected() {
+            Some(ind) => {
+                if ind < self.items.len() - 1 {
+                    self.state.select(Some(ind + 1));
+                }
+            },
+            None => {
+                if !self.items.is_empty() {
+                    self.state.select(Some(0));
+                }
+            }
+        }
     }
 }
 
@@ -71,29 +86,6 @@ impl ResultTable {
                 Constraint::Percentage(20),
             ]);
         t
-    }
-
-    pub fn up(&mut self) {
-        if let Some(ind) = self.state.selected() {
-            if ind > 0 {
-                self.state.select(Some(ind - 1));
-            }
-        }
-    }
-
-    pub fn down(&mut self) {
-        match self.state.selected() {
-            Some(ind) => {
-                if ind < self.items.len() - 1 {
-                    self.state.select(Some(ind + 1));
-                }
-            },
-            None => {
-                if !self.items.is_empty() {
-                    self.state.select(Some(0));
-                }
-            }
-        }
     }
 
     pub fn reset_state(&mut self) {

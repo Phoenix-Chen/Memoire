@@ -39,6 +39,29 @@ impl WidgetTrait for ActionList {
     fn on_blur(&mut self) {
         self.state.select(None);
     }
+
+    fn key_up(&mut self) {
+        if let Some(ind) = self.state.selected() {
+            if ind > 0 {
+                self.state.select(Some(ind - 1));
+            }
+        }
+    }
+
+    fn key_down(&mut self) {
+        match self.state.selected() {
+            Some(ind) => {
+                if ind < self.items.len() - 1 {
+                    self.state.select(Some(ind + 1));
+                }
+            },
+            None => {
+                if !self.items.is_empty() {
+                    self.state.select(Some(0));
+                }
+            }
+        }
+    }
 }
 
 
@@ -69,29 +92,6 @@ impl ActionList {
 
     pub fn reset(&mut self) {
         self.state.select(None);
-    }
-
-    pub fn up(&mut self) {
-        if let Some(ind) = self.state.selected() {
-            if ind > 0 {
-                self.state.select(Some(ind - 1));
-            }
-        }
-    }
-
-    pub fn down(&mut self) {
-        match self.state.selected() {
-            Some(ind) => {
-                if ind < self.items.len() - 1 {
-                    self.state.select(Some(ind + 1));
-                }
-            },
-            None => {
-                if !self.items.is_empty() {
-                    self.state.select(Some(0));
-                }
-            }
-        }
     }
 
     pub fn get_state(&self) -> &ListState {
