@@ -186,7 +186,7 @@ impl WidgetManager {
         self.get_mut_action_list().reset();
     }
 
-    pub fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
+    fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
         match self.widgets.get_mut(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
@@ -208,16 +208,8 @@ impl WidgetManager {
         }
     }
 
-    pub fn get_input_dialog_widgets(&self) -> Vec<Paragraph> {
-        self.get_input_dialog().get_widgets()
-    }
-
-    pub fn get_input_dialog_input_size(&self) -> usize {
-        self.get_input_dialog().get_inputs_size()
-    }
-
-    pub fn get_input_dialog_inputs(&self) -> Vec<String> {
-        self.get_input_dialog().get_inputs_as_strings()
+    pub fn set_input_dialog_inputs(&mut self, inputs: Vec<String>) {
+        self.get_mut_input_dialog().set_inputs(inputs);
     }
 
     pub fn get_display_panel_widget(&self) -> Paragraph {

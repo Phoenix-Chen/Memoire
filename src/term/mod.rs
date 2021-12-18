@@ -64,7 +64,7 @@ impl Term {
             match self.events.recv()? {
                 Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
-                    self.wm.get_mut_input_dialog().set_inputs(
+                    self.wm.set_input_dialog_inputs(
                         Bookmark::default().to_vec()
                     );
                     self.wm.set_cur_focus(INPUT_DIALOG);
@@ -116,7 +116,7 @@ impl Term {
                         },
                         INPUT_DIALOG => {
                             let bookmark = dialog_inputs_to_bookmark(
-                                self.wm.get_input_dialog_inputs()
+                                self.wm.get_input_dialog().get_inputs_as_strings()
                             );
                             match self.wm.get_selected_item_index() {
                                 Some(index) => {  // Edit
@@ -180,10 +180,10 @@ impl Term {
     fn draw(&mut self) {
         let cur_focus = self.wm.get_cur_focus();
         // For render input dialog
-        let input_size = self.wm.get_input_dialog_input_size();
+        let num_of_inputs = self.wm.get_input_dialog().get_inputs_size();
         let input_titles = self.wm.get_input_dialog().get_inputs_names();
         let cur_focus_input = self.wm.get_input_dialog().get_cur_input_ind();
-        let paragraphs = self.wm.get_input_dialog_widgets();
+        let paragraphs = self.wm.get_input_dialog().get_widgets();
         // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
         // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
@@ -199,9 +199,9 @@ impl Term {
             |f| {
                 if cur_focus == INPUT_DIALOG {
                     let mut constraints: Vec<Constraint> = Vec::new();
-                    for _ in 0..input_size {
+                    for _ in 0..num_of_inputs {
                         constraints.push(
-                            Constraint::Ratio(1, input_size as u32)
+                            Constraint::Ratio(1, num_of_inputs as u32)
                         );
                     }
                     let outer_layout = Layout::default()
