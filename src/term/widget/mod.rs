@@ -355,14 +355,26 @@ impl WidgetManager {
     }
 
     pub fn key_left(&mut self) {
-        if let Widget::InputDialog(input_dialog) = self.widgets.get_mut(&self.cur_focus).unwrap() {
-            input_dialog.left()
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_left();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.left(),
+            Widget::SearchBar(input) => input.left(),
+            _ => {}
         }
     }
 
     pub fn key_right(&mut self) {
-        if let Widget::InputDialog(input_dialog) = self.widgets.get_mut(&self.cur_focus).unwrap() {
-            input_dialog.right()
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_right();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.right(),
+            Widget::SearchBar(input) => input.right(),
+            _ => {}
         }
     }
 
