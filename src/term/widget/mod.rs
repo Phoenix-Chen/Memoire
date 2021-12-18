@@ -12,7 +12,8 @@ use tui::{
 };
 
 use crate::collection::bookmark::Bookmark;
-use crate::collection::jq::SearchResult;
+use crate::collection::jq::{SearchResult, search};
+use crate::collection::util::get_collection_dir_path;
 use action_list::ActionList;
 use input_dialog::{Input, InputDialog};
 use result_table::ResultTable;
@@ -24,6 +25,7 @@ use widget_trait::WidgetTrait;
 enum Widget {
     ActionList(ActionList),
     ResultTable(ResultTable),
+    SearchBar(Input),
     InputDialog(InputDialog)
 }
 
@@ -33,7 +35,8 @@ impl WidgetTrait for Widget {
         match self {
             Widget::ActionList(action_list) => action_list.on_focus(),
             Widget::InputDialog(input_dialog) => input_dialog.on_focus(),
-            Widget::ResultTable(result_table) => result_table.on_focus()
+            Widget::ResultTable(result_table) => result_table.on_focus(),
+            Widget::SearchBar(input) => input.on_focus()
         }
     }
 
@@ -41,7 +44,8 @@ impl WidgetTrait for Widget {
         match self {
             Widget::ActionList(action_list) => action_list.on_blur(),
             Widget::InputDialog(input_dialog) => input_dialog.on_blur(),
-            Widget::ResultTable(result_table) => result_table.on_blur()
+            Widget::ResultTable(result_table) => result_table.on_blur(),
+            Widget::SearchBar(input) => input.on_blur()
         }
     }
 }
@@ -56,6 +60,7 @@ pub struct WidgetManager {
 pub const ACTION_LIST: &str = "action_list";
 pub const INPUT_DIALOG: &str = "input_dialog";
 pub const RESULT_TABLE: &str = "result_table";
+pub const SEARCH_BAR: &str = "search_bar";
 
 
 impl WidgetManager {
@@ -67,7 +72,17 @@ impl WidgetManager {
                 ActionList::new(ACTIONS.to_vec())
             )
         );
-        
+        widgets.insert(
+            SEARCH_BAR.to_string(),
+            Widget::SearchBar(
+                Input::new("Search").prefix(
+                    Span::styled(
+                        " > ",
+                        Style::default().fg(Color::LightYellow)
+                    )
+                )
+            )
+        );
         widgets.insert(
             INPUT_DIALOG.to_string(),
             Widget::InputDialog(
@@ -77,6 +92,7 @@ impl WidgetManager {
         widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
         WidgetManager {
             widgets,
+            // cur_focus: SEARCH_BAR.to_string()
             cur_focus: RESULT_TABLE.to_string()
         }
     }
@@ -248,6 +264,32 @@ impl WidgetManager {
         display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true })
     }
 
+    fn get_search_bar(&self) -> &Input {
+        match self.widgets.get(SEARCH_BAR).unwrap() {
+            Widget::SearchBar(input) => {
+                input
+            },
+            _ => {
+                panic!("No search_bar in self.widgets!!!")
+            }
+        }
+    }
+
+    pub fn get_mut_search_bar(&mut self) -> &mut Input {
+        match self.widgets.get_mut(SEARCH_BAR).unwrap() {
+            Widget::SearchBar(input) => {
+                input
+            },
+            _ => {
+                panic!("No search_bar in self.widgets!!!")
+            }
+        }
+    }
+
+    pub fn get_search_bar_widget(&self) -> Paragraph {
+        self.get_search_bar().get_widget()
+    }
+
     // Set the current on focus widget to the the passed string slices
     pub fn set_cur_focus(&mut self, new_focus: &str) {
         if self.cur_focus != new_focus {
@@ -262,11 +304,41 @@ impl WidgetManager {
         &self.cur_focus
     }
 
+    pub fn key_char(&mut self, character: char) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.get_mut_search_bar().update_input(character);
+                
+                // self.cur_fo cus = SEARCH_BAR.to_string();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.update_input(character),
+            Widget::SearchBar(input) => {
+                input.update_input(character);
+                self.update_result_table_from_search_bar();
+            },
+            _ => {}
+        }
+    }
+
+    fn update_result_table_from_search_bar(&mut self) {
+        let keywords = self.get_search_bar().get_input().to_string();
+        self.get_mut_result_table().update_results(
+            search(
+                &get_collection_dir_path(),
+                &keywords.split(' ').collect::<Vec<&str>>()
+            )
+        )
+    }
+
     pub fn key_up(&mut self) {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
             Widget::ActionList(action_list) => action_list.up(),
             Widget::ResultTable(result_table) => result_table.up(),
-            Widget::InputDialog(input_dialog) => input_dialog.up()
+            Widget::InputDialog(input_dialog) => input_dialog.up(),
+            Widget::SearchBar(_) => {
+                
+            }
         }
     }
 
@@ -274,7 +346,10 @@ impl WidgetManager {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
             Widget::ActionList(action_list) => action_list.down(),
             Widget::ResultTable(result_table) => result_table.down(),
-            Widget::InputDialog(input_dialog) => input_dialog.down()
+            Widget::InputDialog(input_dialog) => input_dialog.down(),
+            Widget::SearchBar(_) => {
+
+            }
         }
     }
 
@@ -298,7 +373,10 @@ impl WidgetManager {
             },
             Widget::InputDialog(input_dialog) => {
                 input_dialog.backspace();
-            }
+            },
+            Widget::SearchBar(input) => {
+                input.backspace();
+            },
             _ => {}
         }
     }

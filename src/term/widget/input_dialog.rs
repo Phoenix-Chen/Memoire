@@ -1,7 +1,7 @@
 use tui::{
     style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap}
+    widgets::Paragraph,
 };
 
 use super::widget_trait::WidgetTrait;
@@ -11,7 +11,9 @@ use super::widget_trait::WidgetTrait;
 pub struct Input {
     name: String,
     input: String,
-    cursor_ind: Option<usize>
+    cursor_ind: Option<usize>,
+    prefix: Option<Span<'static>>,
+    // TODO: implement placeholder
 }
 
 impl WidgetTrait for Input {
@@ -29,8 +31,14 @@ impl Input {
         Input {
             name: name.to_string(),
             input: " ".to_owned(), // Extra space for cursor
-            cursor_ind: None
+            cursor_ind: None,
+            prefix: None
         }
+    }
+
+    pub fn prefix(mut self, prefix: Span<'static>) -> Input {
+        self.prefix = Some(prefix);
+        self
     }
 
     pub fn update_input(&mut self, character: char) {
@@ -66,9 +74,13 @@ impl Input {
     }
 
     fn get_text(&self) -> Spans {
+        let mut spans: Vec<Span> = Vec::new();
+        if let Some(span) = &self.prefix {
+            spans.push(span.clone())
+        }
         // Note use self.input directly here for cursor highlight
-        return match self.cursor_ind {
-            Some(index) => Spans::from(vec![
+        match self.cursor_ind {
+            Some(index) => spans.extend_from_slice(&[
                 Span::styled(
                     &self.input[0..index],
                     Style::default().fg(Color::LightYellow)
@@ -82,11 +94,14 @@ impl Input {
                     Style::default().fg(Color::LightYellow)
                 )
             ]),
-            None => Spans::from(vec![Span::styled(
-                self.get_input(),
-                Style::default().fg(Color::White)
-            )])
-        }
+            None => spans.push(
+                Span::styled(
+                    self.get_input(),
+                    Style::default().fg(Color::White)
+                )
+            )
+        };
+        Spans::from(spans)
     }
 
     pub fn get_widget(&self) -> Paragraph {

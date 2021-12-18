@@ -24,7 +24,7 @@ use tui::{
 };
 
 use event::events;
-use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE};
+use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE, SEARCH_BAR};
 use crate::collection::{
     bookmark::Bookmark,
     jq,
@@ -153,15 +153,13 @@ impl Term {
                     }
                 }
                 Key::Char('\t') => {
-                    // Overwrite tab behavior in input mode
-                    if self.wm.get_cur_focus() == "input_dialog" {
+                    // Overwrite tab behavior in input
+                    if self.wm.get_cur_focus() == INPUT_DIALOG {
                         self.wm.update_input_dialog_input(' ');
                     }
                 }
                 Key::Char(character) => {
-                    if self.wm.get_cur_focus() == "input_dialog" {
-                        self.wm.update_input_dialog_input(character);
-                    }
+                    self.wm.key_char(character);
                 }
                 Key::Up => {
                     self.wm.key_up();
@@ -195,6 +193,9 @@ impl Term {
         // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
         // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
+        let search_bar = self.wm.get_search_bar_widget().block(
+            Block::default().borders(Borders::ALL)
+        );
         let result_table_widget = self.wm.get_result_table_widget();
         let result_table_state = self.wm.get_result_table_state();
         let display_panel_widget = self.wm.get_display_panel_widget();
@@ -261,8 +262,9 @@ impl Term {
                     let windows_layout = Layout::default()
                         .direction(Direction::Vertical)
                         .constraints([
-                            Constraint::Percentage(70),
-                            Constraint::Percentage(30)
+                            Constraint::Min(3),
+                            Constraint::Percentage(60),
+                            Constraint::Percentage(40)
                             // Constraint::Min(4)
                         ].as_ref())
                         .split(f.size());
@@ -273,9 +275,10 @@ impl Term {
                             Constraint::Percentage(90),
                             Constraint::Percentage(10)
                         ].as_ref())
-                        .split(windows_layout[1]);
+                        .split(windows_layout[2]);
 
-                    f.render_stateful_widget(result_table_widget, windows_layout[0], &mut result_table_state.clone());
+                    f.render_widget(search_bar, windows_layout[0]);
+                    f.render_stateful_widget(result_table_widget, windows_layout[1], &mut result_table_state.clone());
                     f.render_widget(display_panel_widget, windows_layout2[0]);
                     f.render_stateful_widget(action_list_widget, windows_layout2[1], &mut action_list_state.clone());
                 }
