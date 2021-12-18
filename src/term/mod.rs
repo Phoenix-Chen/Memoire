@@ -152,9 +152,6 @@ impl Term {
                         _ => {}
                     }
                 }
-                Key::Char('\t') => {
-                    self.wm.key_tab();
-                }
                 Key::Char(character) => {
                     self.wm.key_char(character);
                 }

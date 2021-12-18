@@ -26,6 +26,16 @@ impl WidgetTrait for Input {
         self.cursor_ind = None;
     }
 
+    fn key_char(&mut self, character: char) {
+        if character == '\t' {
+            return self.key_char(' ');
+        }
+        if let Some(ind) = self.cursor_ind {
+            self.input.insert(ind, character);
+            self.cursor_ind = Some(ind + 1)
+        }
+    }
+
     fn key_left(&mut self) {
         if let Some(ind) = self.cursor_ind {
             if ind > 0 {
@@ -66,13 +76,6 @@ impl Input {
     pub fn prefix(mut self, prefix: Span<'static>) -> Input {
         self.prefix = Some(prefix);
         self
-    }
-
-    pub fn update_input(&mut self, character: char) {
-        if let Some(ind) = self.cursor_ind {
-            self.input.insert(ind, character);
-            self.cursor_ind = Some(ind + 1)
-        }
     }
 
     fn get_text(&self) -> Spans {
@@ -145,6 +148,10 @@ impl WidgetTrait for InputDialog {
         self.update_input_focus();
     }
 
+    fn key_char(&mut self, character: char) {
+        self.inputs[self.cur_input.unwrap()].key_char(character);
+    }
+
     fn key_up(&mut self) {
         if let Some(ind) = self.cur_input {
             if ind > 0 {
@@ -200,10 +207,6 @@ impl InputDialog {
 
     pub fn get_inputs_size(&self) -> usize {
         self.inputs.len()
-    }
-
-    pub fn update_input(&mut self, character: char) {
-        self.inputs[self.cur_input.unwrap()].update_input(character);
     }
 
     pub fn get_cur_input_ind(&self) -> Option<usize> {

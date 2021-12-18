@@ -288,31 +288,15 @@ impl WidgetManager {
         &self.cur_focus
     }
 
-    // Overwrite tab behavior in input
-    pub fn key_tab(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ResultTable(_) => {
-                self.set_cur_focus(SEARCH_BAR);
-                self.key_tab();
-            },
-            Widget::InputDialog(input_dialog) => input_dialog.update_input(' '),
-            Widget::SearchBar(input) => {
-                input.update_input(' ');
-                self.update_result_table_from_search_bar();
-            },
-            _ => {}
-        }
-    }
-
     pub fn key_char(&mut self, character: char) {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
             Widget::ResultTable(_) => {
                 self.set_cur_focus(SEARCH_BAR);
                 self.key_char(character);
             },
-            Widget::InputDialog(input_dialog) => input_dialog.update_input(character),
+            Widget::InputDialog(input_dialog) => input_dialog.key_char(character),
             Widget::SearchBar(input) => {
-                input.update_input(character);
+                input.key_char(character);
                 self.update_result_table_from_search_bar();
             },
             _ => {}
