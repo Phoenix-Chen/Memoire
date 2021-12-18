@@ -322,13 +322,14 @@ impl WidgetManager {
     }
 
     fn update_result_table_from_search_bar(&mut self) {
+        self.get_mut_result_table().reset_state();
         let keywords = self.get_search_bar().get_input().to_string();
         self.get_mut_result_table().update_results(
             search(
                 &get_collection_dir_path(),
-                &keywords.split(' ').collect::<Vec<&str>>()
+                &keywords.trim().split(' ').collect::<Vec<&str>>()
             )
-        )
+        );
     }
 
     pub fn key_up(&mut self) {
@@ -376,6 +377,7 @@ impl WidgetManager {
             },
             Widget::SearchBar(input) => {
                 input.backspace();
+                self.update_result_table_from_search_bar();
             },
             _ => {}
         }
