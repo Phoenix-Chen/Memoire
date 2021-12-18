@@ -308,9 +308,7 @@ impl WidgetManager {
         match self.widgets.get_mut(&self.cur_focus).unwrap() {
             Widget::ResultTable(_) => {
                 self.set_cur_focus(SEARCH_BAR);
-                self.get_mut_search_bar().update_input(character);
-                
-                // self.cur_fo cus = SEARCH_BAR.to_string();
+                self.key_char(character);
             },
             Widget::InputDialog(input_dialog) => input_dialog.update_input(character),
             Widget::SearchBar(input) => {
@@ -338,7 +336,8 @@ impl WidgetManager {
             Widget::ResultTable(result_table) => result_table.up(),
             Widget::InputDialog(input_dialog) => input_dialog.up(),
             Widget::SearchBar(_) => {
-                
+                self.set_cur_focus(RESULT_TABLE);
+                self.key_up();
             }
         }
     }
@@ -349,7 +348,8 @@ impl WidgetManager {
             Widget::ResultTable(result_table) => result_table.down(),
             Widget::InputDialog(input_dialog) => input_dialog.down(),
             Widget::SearchBar(_) => {
-
+                self.set_cur_focus(RESULT_TABLE);
+                self.key_down();
             }
         }
     }
@@ -379,7 +379,10 @@ impl WidgetManager {
                 input.backspace();
                 self.update_result_table_from_search_bar();
             },
-            _ => {}
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_backspace();
+            }
         }
     }
 }
