@@ -7,6 +7,7 @@ use tui::{
 };
 
 use crate::collection::jq::SearchResult;
+use super::widget_trait::WidgetTrait;
 
 
 pub struct ResultTable {
@@ -14,6 +15,30 @@ pub struct ResultTable {
     items: Vec<SearchResult>,
 }
 
+impl WidgetTrait for ResultTable {
+    fn key_up(&mut self) {
+        if let Some(ind) = self.state.selected() {
+            if ind > 0 {
+                self.state.select(Some(ind - 1));
+            }
+        }
+    }
+
+    fn key_down(&mut self) {
+        match self.state.selected() {
+            Some(ind) => {
+                if ind < self.items.len() - 1 {
+                    self.state.select(Some(ind + 1));
+                }
+            },
+            None => {
+                if !self.items.is_empty() {
+                    self.state.select(Some(0));
+                }
+            }
+        }
+    }
+}
 
 impl ResultTable {
     pub fn new(results: HashSet<SearchResult>) -> ResultTable {
@@ -33,13 +58,13 @@ impl ResultTable {
 
     pub fn get_widget(&self) -> Table {
         // Define selected style for table row
-        let selected_row_style: Style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+        let selected_row_style: Style = Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD);
 
         // Set table
         let header: Row = Row::new(
             ["Command", "Annotation", "Tags", "Collection"]
         ).style(
-            Style::default().fg(Color::Green)
+            Style::default().fg(Color::LightGreen)
                             .add_modifier(Modifier::BOLD)
         );
         let body_rows = self.items.iter().map(
@@ -56,34 +81,11 @@ impl ResultTable {
             .column_spacing(1)
             .widths(&[
                 Constraint::Percentage(35),
-                Constraint::Percentage(30),
+                Constraint::Percentage(25),
                 Constraint::Percentage(20),
-                Constraint::Percentage(15),
+                Constraint::Percentage(20),
             ]);
         t
-    }
-
-    pub fn up(&mut self) {
-        if let Some(ind) = self.state.selected() {
-            if ind > 0 {
-                self.state.select(Some(ind - 1));
-            }
-        }
-    }
-
-    pub fn down(&mut self) {
-        match self.state.selected() {
-            Some(ind) => {
-                if ind < self.items.len() - 1 {
-                    self.state.select(Some(ind + 1));
-                }
-            },
-            None => {
-                if !self.items.is_empty() {
-                    self.state.select(Some(0));
-                }
-            }
-        }
     }
 
     pub fn reset_state(&mut self) {
@@ -100,9 +102,5 @@ impl ResultTable {
 }
 
 fn hashset_to_vec(results: &HashSet<SearchResult>) -> Vec<SearchResult> {
-    let mut v = Vec::new();
-    for r in results.iter() {
-        v.push(r.to_owned());
-    }
-    v
+    results.iter().map(|result| result.to_owned()).collect()
 }

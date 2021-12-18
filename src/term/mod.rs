@@ -18,12 +18,13 @@ use termion::{
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
-    widgets::{Paragraph, Wrap},
+    style::{Color, Style},
+    widgets::{Paragraph, Wrap, Block, Borders},
     Terminal,
 };
 
 use event::events;
-use widget::{Action, WidgetManager, ACTIONS};
+use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE};
 use crate::collection::{
     bookmark::Bookmark,
     jq,
@@ -61,17 +62,18 @@ impl Term {
             self.draw();
 
             match self.events.recv()? {
-                Key::Ctrl('c') => break,  // Need to match exit_key in util::event for consistent behavior
+                Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
-                    if self.wm.get_cur_focus() != "input_dialog" {
-                        self.wm.reset_result_table_state();
-                        self.wm.set_input_dialog(Bookmark::default("", "", &vec![]).to_tuple_vec());
-                        self.wm.set_cur_focus("input_dialog");
+                    if self.wm.get_cur_focus() != INPUT_DIALOG {
+                        self.wm.set_input_dialog_inputs(
+                            Bookmark::default().to_vec()
+                        );
+                        self.wm.set_cur_focus(INPUT_DIALOG);
                     }
                 }
                 Key::Char('\n') => {
                     match self.wm.get_cur_focus() {
-                        "action_list" => {
+                        ACTION_LIST => {
                             if let Some(action_index) = self.wm.get_action_list_state_selected() {
                                 match ACTIONS[action_index] {
                                     Action::Copy => {
@@ -85,8 +87,8 @@ impl Term {
                                         break;
                                     }
                                     Action::Edit => {
-                                        self.wm.update_input_dialog();
-                                        self.wm.set_cur_focus("input_dialog");
+                                        self.wm.update_input_dialog_from_result_table();
+                                        self.wm.set_cur_focus(INPUT_DIALOG);
                                     }
                                     Action::Delete => {
                                         match self.wm.get_selected_item_index() {
@@ -105,19 +107,18 @@ impl Term {
                                         self.wm.reset_action_list_state();
                                         self.wm.reset_result_table_state();
                                         
-                                        self.wm.set_cur_focus("result_table");
+                                        self.wm.set_cur_focus(RESULT_TABLE);
                                     }
                                 }
                                 
                             }
                         }
-                        "result_table" => if self.wm.get_result_table_state_selected().is_some() {
-                            self.wm.set_cur_focus("action_list");
-                            self.wm.key_down();
+                        RESULT_TABLE => if self.wm.get_result_table().get_state().selected().is_some() {
+                            self.wm.set_cur_focus(ACTION_LIST);
                         },
-                        "input_dialog" => {
+                        INPUT_DIALOG => {
                             let bookmark = dialog_inputs_to_bookmark(
-                                self.wm.get_input_dialog_inputs()
+                                self.wm.get_input_dialog().get_inputs_as_strings()
                             );
                             match self.wm.get_selected_item_index() {
                                 Some(index) => {  // Edit
@@ -148,21 +149,13 @@ impl Term {
                                     &[bookmark.get_collection()]
                                 )
                             );
-                            self.wm.set_cur_focus("result_table");
+                            self.wm.set_cur_focus(RESULT_TABLE);
                         }
                         _ => {}
                     }
                 }
-                Key::Char('\t') => {
-                    // Overwrite tab behavior in input mode
-                    if self.wm.get_cur_focus() == "input_dialog" {
-                        self.wm.update_input_dialog_input(' ');
-                    }
-                }
                 Key::Char(character) => {
-                    if self.wm.get_cur_focus() == "input_dialog" {
-                        self.wm.update_input_dialog_input(character);
-                    }
+                    self.wm.key_char(character);
                 }
                 Key::Up => {
                     self.wm.key_up();
@@ -189,23 +182,28 @@ impl Term {
     fn draw(&mut self) {
         let cur_focus = self.wm.get_cur_focus();
         // For render input dialog
-        let input_size = self.wm.get_input_dialog_input_size();
-        let paragraphs = self.wm.get_input_dialog_widgets();
-        let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
-        let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
+        let num_of_inputs = self.wm.get_input_dialog().get_inputs_size();
+        let input_titles = self.wm.get_input_dialog().get_inputs_names();
+        let cur_focus_input = self.wm.get_input_dialog().get_cur_input_ind();
+        let paragraphs = self.wm.get_input_dialog().get_widgets();
+        // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
+        // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
-        let result_table_widget = self.wm.get_result_table_widget();
-        let result_table_state = self.wm.get_result_table_state();
+        let search_bar = self.wm.get_search_bar().get_widget().block(
+            Block::default().borders(Borders::ALL)
+        );
+        let result_table_widget = self.wm.get_result_table().get_widget();
+        let result_table_state = self.wm.get_result_table().get_state();
         let display_panel_widget = self.wm.get_display_panel_widget();
-        let action_list_widget = self.wm.get_action_list_widget();
-        let action_list_state = self.wm.get_action_list_state();
+        let action_list_widget = self.wm.get_action_list().get_widget();
+        let action_list_state = self.wm.get_action_list().get_state();
         self.screen.draw(
             |f| {
-                if cur_focus == "input_dialog" {
+                if cur_focus == INPUT_DIALOG {
                     let mut constraints: Vec<Constraint> = Vec::new();
-                    for _ in 0..input_size {
+                    for _ in 0..num_of_inputs {
                         constraints.push(
-                            Constraint::Ratio(1, input_size as u32)
+                            Constraint::Ratio(1, num_of_inputs as u32)
                         );
                     }
                     let outer_layout = Layout::default()
@@ -228,23 +226,41 @@ impl Term {
 
                     for (i, paragraph) in paragraphs.into_iter().enumerate() {
                         f.render_widget(
-                            paragraph, inner_layout[i]
+                            paragraph.block(
+                                Block::default().title(
+                                    input_titles[i].to_owned()
+                                ).borders(Borders::ALL)
+                            ).style(
+                                // FIXME: Must be a cleaner way
+                                if let Some(cur_input_index) = cur_focus_input {
+                                    if i == cur_input_index {
+                                        Style::default().fg(Color::LightYellow)
+                                    } else {
+                                        Style::default().fg(Color::White)
+                                    }
+                                } else {
+                                    Style::default().fg(Color::White)
+                                }
+                            ),
+                            // ).wrap(Wrap { trim: false }),  // FIXME
+                            inner_layout[i]
                         );
-                        if let Some(i) = input_dialog_cur_input_ind {
-                            // FIXME: calc (cursor_length)/(screen_width - 2)
-                            f.set_cursor(
-                                inner_layout[i].x + input_dialog_cursor + 1,
-                                inner_layout[i].y + 1
-                            );
-                        }
+                        // if let Some(i) = input_dialog_cur_input_ind {
+                        //     // FIXME: calc (cursor_length)/(screen_width - 2)
+                        //     f.set_cursor(
+                        //         inner_layout[i].x + input_dialog_cursor + 1,
+                        //         inner_layout[i].y + 1
+                        //     );
+                        // }
                     }
                 } else {
                     // The most outer top and bottom rectangles
                     let windows_layout = Layout::default()
                         .direction(Direction::Vertical)
                         .constraints([
-                            Constraint::Percentage(70),
-                            Constraint::Percentage(30)
+                            Constraint::Min(3),
+                            Constraint::Percentage(60),
+                            Constraint::Percentage(40)
                             // Constraint::Min(4)
                         ].as_ref())
                         .split(f.size());
@@ -255,9 +271,10 @@ impl Term {
                             Constraint::Percentage(90),
                             Constraint::Percentage(10)
                         ].as_ref())
-                        .split(windows_layout[1]);
+                        .split(windows_layout[2]);
 
-                    f.render_stateful_widget(result_table_widget, windows_layout[0], &mut result_table_state.clone());
+                    f.render_widget(search_bar, windows_layout[0]);
+                    f.render_stateful_widget(result_table_widget, windows_layout[1], &mut result_table_state.clone());
                     f.render_widget(display_panel_widget, windows_layout2[0]);
                     f.render_stateful_widget(action_list_widget, windows_layout2[1], &mut action_list_state.clone());
                 }
@@ -266,12 +283,12 @@ impl Term {
     }
 }
 
-fn dialog_inputs_to_bookmark(inputs: &Vec<(String, String)>) -> Bookmark {
+fn dialog_inputs_to_bookmark(inputs: Vec<String>) -> Bookmark {
     Bookmark::new(
-        &replace_special_chars(&inputs[0].1), 
-        &replace_special_chars(&inputs[1].1),
-        &inputs[2].1.split(',').map(|s| replace_special_chars(s)).collect(),
-        &replace_special_chars(&inputs[3].1)
+        &replace_special_chars(&inputs[0]), 
+        &replace_special_chars(&inputs[1]),
+        &inputs[2].split(',').map(|s| replace_special_chars(s).trim().to_owned()).collect(),
+        &replace_special_chars(&inputs[3])
     )
 }
 
