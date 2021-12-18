@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListState, Table, TableState, Paragraph, Wrap}
+    widgets::{Block, Borders, Paragraph, Wrap}
 };
 
 use crate::collection::bookmark::Bookmark;
@@ -125,7 +125,7 @@ impl WidgetManager {
     }
 
     /// Returns an immutable reference to result_table
-    fn get_result_table(&self) -> &ResultTable {
+    pub fn get_result_table(&self) -> &ResultTable {
         match self.widgets.get(RESULT_TABLE).unwrap() {
             Widget::ResultTable(result_table) => {
                 result_table
@@ -134,20 +134,6 @@ impl WidgetManager {
                 panic!("No result_table in self.widgets!!!")
             }
         }
-    }
-
-    /// Returns a tui::widgets::Table from result_table
-    pub fn get_result_table_widget(&self) -> Table {
-        self.get_result_table().get_widget()
-    }
-
-    // Returns an immutable tui::widgets::TableState reference from result_table
-    pub fn get_result_table_state(&self) -> &TableState {
-        self.get_result_table().get_state()
-    }
-
-    pub fn get_result_table_state_selected(&self) -> Option<usize> {
-        self.get_result_table_state().selected()
     }
 
     pub fn get_selected_item_index(&self) -> Option<usize> {
@@ -170,7 +156,7 @@ impl WidgetManager {
         result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().get_command()
     }
 
-    fn get_action_list(&self) -> &ActionList {
+    pub fn get_action_list(&self) -> &ActionList {
         match self.widgets.get(ACTION_LIST).unwrap() {
             Widget::ActionList(action_list) => {
                 action_list
@@ -190,14 +176,6 @@ impl WidgetManager {
                 panic!("No action_list in self.widgets!!!")
             }
         }
-    }
-
-    pub fn get_action_list_widget(&self) -> List {
-        self.get_action_list().get_widget()
-    }
-
-    pub fn get_action_list_state(&self) -> &ListState {
-        self.get_action_list().get_state()
     }
 
     pub fn get_action_list_state_selected(&self) -> Option<usize> {
@@ -243,7 +221,7 @@ impl WidgetManager {
     }
 
     pub fn get_display_panel_widget(&self) -> Paragraph {
-        let display_panel: Paragraph = match self.get_result_table_state_selected() {
+        let display_panel: Paragraph = match self.get_result_table().get_state().selected() {
             Some(result_table_state) => {
                 let result_table = self.get_result_table();
                 Paragraph::new(
@@ -259,7 +237,7 @@ impl WidgetManager {
         display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true })
     }
 
-    fn get_search_bar(&self) -> &Input {
+    pub fn get_search_bar(&self) -> &Input {
         match self.widgets.get(SEARCH_BAR).unwrap() {
             Widget::SearchBar(input) => {
                 input
@@ -268,10 +246,6 @@ impl WidgetManager {
                 panic!("No search_bar in self.widgets!!!")
             }
         }
-    }
-
-    pub fn get_search_bar_widget(&self) -> Paragraph {
-        self.get_search_bar().get_widget()
     }
 
     // Set the current on focus widget to the the passed string slices

@@ -111,7 +111,7 @@ impl Term {
                                 
                             }
                         }
-                        RESULT_TABLE => if self.wm.get_result_table_state_selected().is_some() {
+                        RESULT_TABLE => if self.wm.get_result_table().get_state().selected().is_some() {
                             self.wm.set_cur_focus(ACTION_LIST);
                         },
                         INPUT_DIALOG => {
@@ -187,14 +187,14 @@ impl Term {
         // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
         // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
-        let search_bar = self.wm.get_search_bar_widget().block(
+        let search_bar = self.wm.get_search_bar().get_widget().block(
             Block::default().borders(Borders::ALL)
         );
-        let result_table_widget = self.wm.get_result_table_widget();
-        let result_table_state = self.wm.get_result_table_state();
+        let result_table_widget = self.wm.get_result_table().get_widget();
+        let result_table_state = self.wm.get_result_table().get_state();
         let display_panel_widget = self.wm.get_display_panel_widget();
-        let action_list_widget = self.wm.get_action_list_widget();
-        let action_list_state = self.wm.get_action_list_state();
+        let action_list_widget = self.wm.get_action_list().get_widget();
+        let action_list_state = self.wm.get_action_list().get_state();
         self.screen.draw(
             |f| {
                 if cur_focus == INPUT_DIALOG {
