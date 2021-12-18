@@ -64,10 +64,12 @@ impl Term {
             match self.events.recv()? {
                 Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
-                    self.wm.set_input_dialog_inputs(
-                        Bookmark::default().to_vec()
-                    );
-                    self.wm.set_cur_focus(INPUT_DIALOG);
+                    if self.wm.get_cur_focus() != INPUT_DIALOG {
+                        self.wm.set_input_dialog_inputs(
+                            Bookmark::default().to_vec()
+                        );
+                        self.wm.set_cur_focus(INPUT_DIALOG);
+                    }
                 }
                 Key::Char('\n') => {
                     match self.wm.get_cur_focus() {
