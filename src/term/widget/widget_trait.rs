@@ -3,7 +3,7 @@ pub trait WidgetTrait {
 
     fn on_blur(&mut self) {}
 
-    fn key_char(&mut self, character: char) {}
+    fn key_char(&mut self, _character: char) {}
 
     fn key_up(&mut self) {}
 

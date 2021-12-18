@@ -187,7 +187,7 @@ impl WidgetTrait for InputDialog {
 impl InputDialog {
     pub fn new(input_names: Vec<&str>) -> InputDialog {
         InputDialog {
-            inputs: input_names.into_iter().map(|name| Input::new(name)).collect(),
+            inputs: input_names.into_iter().map(Input::new).collect(),
             cur_input: None
         }
     }
@@ -202,7 +202,7 @@ impl InputDialog {
     }
 
     pub fn get_widgets(&self) -> Vec<Paragraph> {
-        (&self.inputs).into_iter().map(|input| input.get_widget()).collect()        
+        (&self.inputs).iter().map(|input| input.get_widget()).collect()        
     }
 
     pub fn get_inputs_size(&self) -> usize {
@@ -214,11 +214,11 @@ impl InputDialog {
     }
 
     pub fn get_inputs_as_strings(&self) -> Vec<String> {
-        (&self.inputs).into_iter().map(|input| input.get_input().to_string()).collect()
+        (&self.inputs).iter().map(|input| input.get_input().to_string()).collect()
     }
 
     pub fn get_inputs_names(&self) -> Vec<String> {
-        (&self.inputs).into_iter().map(|input| input.get_name().to_string()).collect()
+        (&self.inputs).iter().map(|input| input.get_name().to_string()).collect()
     }
 
     fn update_input_focus(&mut self) {
