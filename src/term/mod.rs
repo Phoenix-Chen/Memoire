@@ -24,7 +24,7 @@ use tui::{
 };
 
 use event::events;
-use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE, SEARCH_BAR};
+use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE};
 use crate::collection::{
     bookmark::Bookmark,
     jq,
@@ -153,10 +153,7 @@ impl Term {
                     }
                 }
                 Key::Char('\t') => {
-                    // Overwrite tab behavior in input
-                    if self.wm.get_cur_focus() == INPUT_DIALOG {
-                        self.wm.update_input_dialog_input(' ');
-                    }
+                    self.wm.key_tab();
                 }
                 Key::Char(character) => {
                     self.wm.key_char(character);

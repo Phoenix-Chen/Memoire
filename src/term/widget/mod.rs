@@ -243,10 +243,6 @@ impl WidgetManager {
         self.get_input_dialog().get_inputs_as_strings()
     }
 
-    pub fn update_input_dialog_input(&mut self, character: char) {
-        self.get_mut_input_dialog().update_input(character);
-    }
-
     pub fn get_display_panel_widget(&self) -> Paragraph {
         let display_panel: Paragraph = match self.get_result_table_state_selected() {
             Some(result_table_state) => {
@@ -275,17 +271,6 @@ impl WidgetManager {
         }
     }
 
-    pub fn get_mut_search_bar(&mut self) -> &mut Input {
-        match self.widgets.get_mut(SEARCH_BAR).unwrap() {
-            Widget::SearchBar(input) => {
-                input
-            },
-            _ => {
-                panic!("No search_bar in self.widgets!!!")
-            }
-        }
-    }
-
     pub fn get_search_bar_widget(&self) -> Paragraph {
         self.get_search_bar().get_widget()
     }
@@ -302,6 +287,22 @@ impl WidgetManager {
     // Returns a string slices of current on focus widget
     pub fn get_cur_focus(&self) -> &str {
         &self.cur_focus
+    }
+
+    // Overwrite tab behavior in input
+    pub fn key_tab(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_tab();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.update_input(' '),
+            Widget::SearchBar(input) => {
+                input.update_input(' ');
+                self.update_result_table_from_search_bar();
+            },
+            _ => {}
+        }
     }
 
     pub fn key_char(&mut self, character: char) {
