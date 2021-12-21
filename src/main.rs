@@ -3,7 +3,7 @@ extern crate clap;
 mod term;
 mod collection;
 
-use std::{env, path::Path};
+use std::{env, path::Path, process::{Command, Stdio, exit}};
 use clap::{Arg, App, SubCommand};
 
 use collection::{
@@ -22,6 +22,21 @@ fn main() {
     // TODO: Move this logic to collection
     if !Path::new(&get_json_path(DEFAULT_JSON_NAME)).exists() {
         create_collection_dir(&get_collection_dir_path());
+    }
+
+    // Check if jq is installed
+    let status = Command::new("bash")
+                         .arg("-c")
+                         .arg("jq --version")
+                         .stdout(Stdio::null())
+                         .stderr(Stdio::null())
+                         .status()
+                         .expect("jq command not found");
+    if !status.success() {
+        println!("Unable to execute `jq`");
+        println!("Please make sure `jq` is correctly installed.");
+        println!("For more Details see: https://stedolan.github.io/jq/");
+        exit(1);
     }
 
     // Validate all json format
