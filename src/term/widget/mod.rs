@@ -228,7 +228,19 @@ impl WidgetManager {
                 )
             },
             None => {
-                Paragraph::new("")
+                Paragraph::new(
+                    vec![
+                        Spans::from(vec![Span::styled("Hints*", Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))]),
+                        Spans::from(vec![
+                            Span::styled("Ctrl-c", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
+                            Span::styled(" to quit anytime", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
+                        ]),
+                        Spans::from(vec![
+                            Span::styled("Ctrl-a", Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)),
+                            Span::styled(" to add", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
+                        ])
+                    ]
+                )
             }
         };
         display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true })

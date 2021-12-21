@@ -18,14 +18,10 @@ use term::Term;
 
 
 fn main() {
-    // Create Collection and default.json if does not exist
+    // Create Collection path if does not exist
     // TODO: Move this logic to collection
     if !Path::new(&get_json_path(DEFAULT_JSON_NAME)).exists() {
         create_collection_dir(&get_collection_dir_path());
-        // util::write_to_json(
-        //     &get_json_path(DEFAULT_JSON_NAME),
-        //     None
-        // );
     }
 
     // Validate all json format
