@@ -64,6 +64,8 @@ impl Term {
             match self.events.recv()? {
                 Key::Ctrl('c') => break,
                 Key::Ctrl('a') => {
+                    // NOTE: reset result table state, otherwise will edit instead of add
+                    self.wm.reset_result_table_state();
                     if self.wm.get_cur_focus() != INPUT_DIALOG {
                         self.wm.set_input_dialog_inputs(
                             Bookmark::default().to_vec()
