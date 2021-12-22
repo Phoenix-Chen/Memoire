@@ -18,7 +18,7 @@ termion = "1.5.6"
 tui = "0.16.0"
 clap = "2.34.0"
 dirs = "2.0.2"
-clipboard = "0.5.0"
+arboard = "2.0.1"
 
 [[bin]]
 name = "memoire"

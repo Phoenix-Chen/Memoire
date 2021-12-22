@@ -1,4 +1,4 @@
-extern crate clipboard;
+extern crate arboard;
 
 mod widget;
 mod event;
@@ -8,7 +8,7 @@ use std::{
     sync::mpsc
 };
 
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 use termion::{
     event::Key,
     raw::{IntoRawMode, RawTerminal},
@@ -79,11 +79,11 @@ impl Term {
                             if let Some(action_index) = self.wm.get_action_list_state_selected() {
                                 match ACTIONS[action_index] {
                                     Action::Copy => {
-                                        let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                                        ctx.set_contents(
+                                        let mut clipboard = Clipboard::new().unwrap();
+                                        clipboard.set_text(
                                             self.wm
                                                 .get_selected_item_command()
-                                                .to_owned(),
+                                                .to_owned()
                                         )
                                         .unwrap();
                                         break;
