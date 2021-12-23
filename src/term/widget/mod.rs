@@ -215,7 +215,8 @@ impl WidgetManager {
         let result_table = self.get_result_table();
         let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_vec();
         self.get_mut_input_dialog().set_inputs(inputs);
-        self.get_mut_result_table().reset_state();
+        // Note: Do not reset result_table state here
+        // Input_dialog will use result_table state to determine add/edit
     }
 
     /// Returns a mutable reference to the result_table
