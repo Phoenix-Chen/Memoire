@@ -13,5 +13,7 @@ pub trait WidgetTrait {
 
     fn key_right(&mut self) {}
 
+    fn key_esc(&mut self) {}
+
     fn key_backspace(&mut self) {}
 }

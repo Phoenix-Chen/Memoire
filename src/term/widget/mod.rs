@@ -19,7 +19,7 @@ use input_dialog::{Input, InputDialog};
 use result_table::ResultTable;
 pub use action_list::Action;
 pub use action_list::ACTIONS;
-use widget_trait::WidgetTrait;
+pub use widget_trait::WidgetTrait;
 
 
 enum Widget {
@@ -63,6 +63,106 @@ pub const RESULT_TABLE: &str = "result_table";
 pub const SEARCH_BAR: &str = "search_bar";
 
 
+impl WidgetTrait for WidgetManager {
+    fn key_char(&mut self, character: char) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_char(character);
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.key_char(character),
+            Widget::SearchBar(input) => {
+                input.key_char(character);
+                self.update_result_table_from_search_bar();
+            },
+            _ => {}
+        }
+    }
+
+    fn key_up(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ActionList(action_list) => action_list.key_up(),
+            Widget::ResultTable(result_table) => result_table.key_up(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_up(),
+            Widget::SearchBar(_) => {
+                self.set_cur_focus(RESULT_TABLE);
+                self.key_up();
+            }
+        }
+    }
+
+    fn key_down(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ActionList(action_list) => action_list.key_down(),
+            Widget::ResultTable(result_table) => result_table.key_down(),
+            Widget::InputDialog(input_dialog) => input_dialog.key_down(),
+            Widget::SearchBar(_) => {
+                self.set_cur_focus(RESULT_TABLE);
+                self.key_down();
+            }
+        }
+    }
+
+    fn key_left(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_left();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.key_left(),
+            Widget::SearchBar(input) => input.key_left(),
+            _ => {}
+        }
+
+    }
+
+    fn key_right(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_right();
+            },
+            Widget::InputDialog(input_dialog) => input_dialog.key_right(),
+            Widget::SearchBar(input) => input.key_right(),
+            _ => {}
+        }
+    }
+
+    fn key_backspace(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::InputDialog(input_dialog) => {
+                input_dialog.key_backspace();
+            },
+            Widget::SearchBar(input) => {
+                input.key_backspace();
+                self.update_result_table_from_search_bar();
+            },
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+                self.key_backspace();
+            },
+            _ => {}
+        }
+    }
+
+    fn key_esc(&mut self) {
+        match self.widgets.get_mut(&self.cur_focus).unwrap() {
+            Widget::ActionList(action_list) => {
+                action_list.reset();
+                self.set_cur_focus(RESULT_TABLE);
+            },
+            Widget::InputDialog(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+            },
+            Widget::ResultTable(_) => {
+                self.set_cur_focus(SEARCH_BAR);
+            }
+            _ => {}
+        }
+    }
+}
+
+
 impl WidgetManager {
     pub fn new() -> WidgetManager {
         let mut widgets: HashMap<String, Widget> = HashMap::new();
@@ -82,7 +182,7 @@ impl WidgetManager {
                     )
                 ).placeholder(
                     Span::styled(
-                        "Type to search | Arrow to move | Enter to select | Backspace to go back",
+                        "Type to search | Arrow to move | Enter to select | Esc to go back",
                         Style::default().fg(Color::Gray)
                     )
                 )
@@ -115,6 +215,7 @@ impl WidgetManager {
         let result_table = self.get_result_table();
         let inputs = result_table.get_item(result_table.get_state().selected().unwrap()).get_bookmark().to_vec();
         self.get_mut_input_dialog().set_inputs(inputs);
+        self.get_mut_result_table().reset_state();
     }
 
     /// Returns a mutable reference to the result_table
@@ -271,21 +372,6 @@ impl WidgetManager {
         &self.cur_focus
     }
 
-    pub fn key_char(&mut self, character: char) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ResultTable(_) => {
-                self.set_cur_focus(SEARCH_BAR);
-                self.key_char(character);
-            },
-            Widget::InputDialog(input_dialog) => input_dialog.key_char(character),
-            Widget::SearchBar(input) => {
-                input.key_char(character);
-                self.update_result_table_from_search_bar();
-            },
-            _ => {}
-        }
-    }
-
     fn update_result_table_from_search_bar(&mut self) {
         self.get_mut_result_table().reset_state();
         let keywords = self.get_search_bar().get_input().to_string();
@@ -295,75 +381,6 @@ impl WidgetManager {
                 &keywords.trim().split(' ').collect::<Vec<&str>>()
             )
         );
-    }
-
-    pub fn key_up(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ActionList(action_list) => action_list.key_up(),
-            Widget::ResultTable(result_table) => result_table.key_up(),
-            Widget::InputDialog(input_dialog) => input_dialog.key_up(),
-            Widget::SearchBar(_) => {
-                self.set_cur_focus(RESULT_TABLE);
-                self.key_up();
-            }
-        }
-    }
-
-    pub fn key_down(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ActionList(action_list) => action_list.key_down(),
-            Widget::ResultTable(result_table) => result_table.key_down(),
-            Widget::InputDialog(input_dialog) => input_dialog.key_down(),
-            Widget::SearchBar(_) => {
-                self.set_cur_focus(RESULT_TABLE);
-                self.key_down();
-            }
-        }
-    }
-
-    pub fn key_left(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ResultTable(_) => {
-                self.set_cur_focus(SEARCH_BAR);
-                self.key_left();
-            },
-            Widget::InputDialog(input_dialog) => input_dialog.key_left(),
-            Widget::SearchBar(input) => input.key_left(),
-            _ => {}
-        }
-
-    }
-
-    pub fn key_right(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ResultTable(_) => {
-                self.set_cur_focus(SEARCH_BAR);
-                self.key_right();
-            },
-            Widget::InputDialog(input_dialog) => input_dialog.key_right(),
-            Widget::SearchBar(input) => input.key_right(),
-            _ => {}
-        }
-    }
-
-    pub fn key_backspace(&mut self) {
-        match self.widgets.get_mut(&self.cur_focus).unwrap() {
-            Widget::ActionList(action_list) => {
-                action_list.reset();
-                self.set_cur_focus(RESULT_TABLE);
-            },
-            Widget::InputDialog(input_dialog) => {
-                input_dialog.key_backspace();
-            },
-            Widget::SearchBar(input) => {
-                input.key_backspace();
-                self.update_result_table_from_search_bar();
-            },
-            Widget::ResultTable(_) => {
-                self.set_cur_focus(SEARCH_BAR);
-                self.key_backspace();
-            }
-        }
     }
 }
 

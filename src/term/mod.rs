@@ -24,7 +24,10 @@ use tui::{
 };
 
 use event::events;
-use widget::{Action, WidgetManager, ACTIONS, ACTION_LIST, INPUT_DIALOG, RESULT_TABLE};
+use widget::{
+    Action, WidgetManager, WidgetTrait, ACTIONS,
+    ACTION_LIST, INPUT_DIALOG, RESULT_TABLE, SEARCH_BAR
+};
 use crate::collection::{
     bookmark::Bookmark,
     jq,
@@ -152,6 +155,13 @@ impl Term {
                                 )
                             );
                             self.wm.set_cur_focus(RESULT_TABLE);
+                        },
+                        SEARCH_BAR => {
+                            if !self.wm.get_result_table().get_state().selected().is_some() {
+                                self.wm.key_down();
+                            } else {
+                                self.wm.set_cur_focus(RESULT_TABLE);
+                            }
                         }
                         _ => {}
                     }
@@ -173,6 +183,9 @@ impl Term {
                 }
                 Key::Backspace => {
                     self.wm.key_backspace();
+                }
+                Key::Esc => {
+                    self.wm.key_esc();
                 }
                 _ => {}
             }
