@@ -19,7 +19,6 @@ use term::Term;
 
 fn main() {
     // Create Collection path if does not exist
-    // TODO: Move this logic to collection
     if !Path::new(&get_json_path(DEFAULT_JSON_NAME)).exists() {
         create_collection_dir(&get_collection_dir_path());
     }
@@ -45,7 +44,7 @@ fn main() {
     let mut term = Term::new();
     term.get_mut_widget_manager().update_result_table(parse_input(env::args().collect()));
 
-    term.display();
+    term.display().unwrap();
 }
 
 

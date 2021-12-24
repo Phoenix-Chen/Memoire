@@ -157,7 +157,7 @@ impl Term {
                             self.wm.set_cur_focus(RESULT_TABLE);
                         },
                         SEARCH_BAR => {
-                            if !self.wm.get_result_table().get_state().selected().is_some() {
+                            if self.wm.get_result_table().get_state().selected().is_none() {
                                 self.wm.key_down();
                             } else {
                                 self.wm.set_cur_focus(RESULT_TABLE);

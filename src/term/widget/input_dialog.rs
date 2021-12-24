@@ -90,7 +90,7 @@ impl Input {
             spans.push(span.clone());
         }
         if let Some(span) = &self.placeholder {
-            if self.get_input().len() == 0 {
+            if self.get_input().is_empty() {
                 spans.push(span.clone());
                 return Spans::from(spans);
             }
@@ -208,8 +208,8 @@ impl InputDialog {
         if self.inputs.len() != inputs.len() {
             panic!("Inputs length not equal.")  // TODO: Better handling
         }
-        for index in 0..self.inputs.len() {
-            self.inputs[index].set_input(&inputs[index]);
+        for (index, input_widget) in self.inputs.iter_mut().enumerate() {
+            input_widget.set_input(&inputs[index]);
         }
     }
 

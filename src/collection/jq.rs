@@ -27,7 +27,7 @@ impl SearchResult {
 
 
 // TODO: implement insert at index, currently index is unused
-pub fn add(json_path: &str, bookmark: &Bookmark, index: Option<usize>) {
+pub fn add(json_path: &str, bookmark: &Bookmark, _index: Option<usize>) {
     write_to_json(json_path, Some(&execute_bash(
         &format!(
             "cat {} | jq -s $'.[0] |= .+ [{}] | .[0]'",
@@ -58,7 +58,7 @@ pub fn search(dir_path: &str, keywords: &[&str]) -> Vec<SearchResult> {
 }
 
 
-pub fn validate_jsons(dir_path: &str) {
+pub fn validate_jsons(_dir_path: &str) {
     // TODO: ensure no corrupt file in dir_path with jq
 }
 
