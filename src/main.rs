@@ -1,5 +1,3 @@
-extern crate clap;
-
 mod term;
 mod collection;
 

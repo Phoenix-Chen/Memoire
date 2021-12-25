@@ -1,5 +1,3 @@
-extern crate serde_json;
-
 use std::process::{Command, exit};
 
 use serde::{Deserialize};

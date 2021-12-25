@@ -1,5 +1,3 @@
-extern crate arboard;
-
 mod widget;
 mod event;
 
