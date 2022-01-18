@@ -1,4 +1,7 @@
-use std::process::{Command, exit};
+use std::{
+    fs::read_dir,
+    process::{Command, Stdio, exit}
+};
 
 use serde::{Deserialize};
 
@@ -56,8 +59,35 @@ pub fn search(dir_path: &str, keywords: &[&str]) -> Vec<SearchResult> {
 }
 
 
-pub fn validate_jsons(_dir_path: &str) {
-    // TODO: ensure no corrupt file in dir_path with jq
+/// Ensure no corrupt json file in dir_path with jq
+pub fn validate_jsons(dir_path: &str) {
+    for path in read_dir(dir_path).unwrap() {
+        let path = path.unwrap().path().into_os_string().to_str().unwrap().to_string();
+        if path.ends_with(".json") {
+            let error_msg = format!(
+                "File {} contains invalid json format.",
+                &path
+            );
+            let status = Command::new("bash")
+                         .arg("-c")
+                         .arg(
+                             format!(
+                                 "cat {} | jq empty",
+                                 &path
+                             )
+                         )
+                         .stdout(Stdio::null())
+                         .stderr(Stdio::null())
+                         .status()
+                         .expect(
+                            &error_msg
+                         );
+            if !status.success() {
+                println!("{}", &error_msg);
+                exit(0);
+            }
+        }
+    }
 }
 
 
