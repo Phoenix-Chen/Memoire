@@ -345,7 +345,7 @@ impl WidgetManager {
                 )
             }
         };
-        display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true })
+        display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true, break_word: false })
     }
 
     pub fn get_search_bar(&self) -> &Input {

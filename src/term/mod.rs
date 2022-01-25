@@ -199,8 +199,6 @@ impl Term {
         let input_titles = self.wm.get_input_dialog().get_inputs_names();
         let cur_focus_input = self.wm.get_input_dialog().get_cur_input_ind();
         let paragraphs = self.wm.get_input_dialog().get_widgets();
-        // let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
-        // let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
         // For render
         let search_bar = self.wm.get_search_bar().get_widget().block(
             Block::default().borders(Borders::ALL)
@@ -229,7 +227,7 @@ impl Term {
                         )
                         .split(f.size());
                     f.render_widget(
-                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor and ENTER to submit").wrap(Wrap { trim: true }),
+                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor and ENTER to submit").wrap(Wrap { trim: true, break_word: true }),
                         outer_layout[0]
                     );
                     let inner_layout = Layout::default()
@@ -254,17 +252,9 @@ impl Term {
                                 } else {
                                     Style::default().fg(Color::White)
                                 }
-                            ),
-                            // ).wrap(Wrap { trim: false }),  // FIXME
+                            ).wrap(Wrap { trim: false, break_word: true }),
                             inner_layout[i]
                         );
-                        // if let Some(i) = input_dialog_cur_input_ind {
-                        //     // FIXME: calc (cursor_length)/(screen_width - 2)
-                        //     f.set_cursor(
-                        //         inner_layout[i].x + input_dialog_cursor + 1,
-                        //         inner_layout[i].y + 1
-                        //     );
-                        // }
                     }
                 } else {
                     // The most outer top and bottom rectangles
