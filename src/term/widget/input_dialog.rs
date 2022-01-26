@@ -142,14 +142,13 @@ impl Input {
 }
 
 
-// Rename to InputGroup
-pub struct InputDialog {
+pub struct InputGroup {
     inputs: Vec<Input>,
     cur_input: Option<usize>
 }
 
 
-impl WidgetTrait for InputDialog {
+impl WidgetTrait for InputGroup {
     fn on_focus(&mut self) {
         self.cur_input = Some(0);
         self.update_input_focus();
@@ -196,9 +195,9 @@ impl WidgetTrait for InputDialog {
 }
 
 
-impl InputDialog {
-    pub fn new(input_names: Vec<&str>) -> InputDialog {
-        InputDialog {
+impl InputGroup {
+    pub fn new(input_names: Vec<&str>) -> InputGroup {
+        InputGroup {
             inputs: input_names.into_iter().map(Input::new).collect(),
             cur_input: None
         }
@@ -206,7 +205,7 @@ impl InputDialog {
 
     pub fn set_inputs(&mut self, inputs: Vec<String>) {
         if self.inputs.len() != inputs.len() {
-            panic!("Inputs length not equal.")  // TODO: Better handling
+            panic!("Inputs length not equal to InputGroup size.");
         }
         for (index, input_widget) in self.inputs.iter_mut().enumerate() {
             input_widget.set_input(&inputs[index]);

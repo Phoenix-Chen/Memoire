@@ -15,7 +15,7 @@ use crate::collection::bookmark::Bookmark;
 use crate::collection::jq::{SearchResult, search};
 use crate::collection::util::get_collection_dir_path;
 use action_list::ActionList;
-use input_dialog::{Input, InputDialog};
+use input_dialog::{Input, InputGroup};
 use result_table::ResultTable;
 pub use action_list::Action;
 pub use action_list::ACTIONS;
@@ -26,7 +26,7 @@ enum Widget {
     ActionList(ActionList),
     ResultTable(ResultTable),
     SearchBar(Input),
-    InputDialog(InputDialog)
+    InputDialog(InputGroup)
 }
 
 impl WidgetTrait for Widget {
@@ -191,7 +191,7 @@ impl WidgetManager {
         widgets.insert(
             INPUT_DIALOG.to_string(),
             Widget::InputDialog(
-                InputDialog::new(vec!["Command", "Annotation", "Tags", "Collection"])
+                InputGroup::new(vec!["Command", "Annotation", "Tags", "Collection"])
             )
         );
         widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
@@ -293,7 +293,7 @@ impl WidgetManager {
         self.get_mut_action_list().reset();
     }
 
-    fn get_mut_input_dialog(&mut self) -> &mut InputDialog {
+    fn get_mut_input_dialog(&mut self) -> &mut InputGroup {
         match self.widgets.get_mut(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
@@ -304,7 +304,7 @@ impl WidgetManager {
         }
     }
 
-    pub fn get_input_dialog(&self) -> &InputDialog {
+    pub fn get_input_dialog(&self) -> &InputGroup {
         match self.widgets.get(INPUT_DIALOG).unwrap() {
             Widget::InputDialog(input_dialog) => {
                 input_dialog
