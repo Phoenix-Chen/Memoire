@@ -227,7 +227,9 @@ impl Term {
                         )
                         .split(f.size());
                     f.render_widget(
-                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor and ENTER to submit").wrap(Wrap { trim: true, break_word: true }),
+                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor, ENTER to submit and ESC to go back.")
+                            .style(Style::default().fg(Color::LightBlue))
+                            .wrap(Wrap { trim: true, break_word: true }),
                         outer_layout[0]
                     );
                     let inner_layout = Layout::default()
@@ -264,7 +266,6 @@ impl Term {
                             Constraint::Min(3),
                             Constraint::Percentage(60),
                             Constraint::Percentage(40)
-                            // Constraint::Min(4)
                         ].as_ref())
                         .split(f.size());
 
