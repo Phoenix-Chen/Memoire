@@ -5,15 +5,10 @@ use std::{
 };
 
 
-// lazy_static! {
-//     pub static ref COLLECTION_DIR_PATH: String = get_path_from_home_dir(COLLECTION_DIR_NAME);
-//     pub static ref DEFAULT_JSON_PATH: String = format!("{}/{}", &COLLECTION_DIR_PATH, DEFAULT_FILE_NAME);
-// }
 static COLLECTION_DIR_NAME: &str = ".memoire";
 pub static DEFAULT_JSON_NAME: &str = "default";
 
 
-// TODO: Change from function to variable
 pub fn get_collection_dir_path() -> String {
     get_full_path(COLLECTION_DIR_NAME)
 }
