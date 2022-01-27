@@ -1,12 +1,19 @@
 # Memoire
 ***
-Memoire is a TUI program to help you archive commands (or any text).
+Editable, portable and sharable CLI cheatsheet.
 
 <img src="./assets/memoire_demo.gif" alt="memoire demo">
 
-You can search archived commands by keywords in command, annotation and/or tags. The archived commands are editable and deletable. Archived commands are saved in json format for easy sharing.
+You can search archived commands by keywords in command, annotation, tags and/or collection. The archived commands are editable and removable. Archived commands are saved in `json` format for editability and portability.
+
+## Requirement
+***
+This program use [jq](https://stedolan.github.io/jq/).
 
 ## Installation
+***
+
+### With Cargo
 ***
 Make sure you have [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed.
 
@@ -20,7 +27,7 @@ cargo install memoire
 
 ### CLI
 ***
-- Show all records:
+- Show all:
     ```sh
     memoire
     ```
@@ -28,80 +35,25 @@ cargo install memoire
     ```sh
     memoire [-s|--search] <keyword_1> <keyword_2> ...
     ```
-- Search by command:
-    ```sh
-    memoire [-c|--command] <keyword_1> <keyword_2> ...
-    ```
-- Search by annotation:
-    ```sh
-    memoire [-a|--annotation] <keyword_1> <keyword_2> ...
-    ```
-- Search by tags:
-    ```sh
-    memoire [-t|--tags] <keyword_1> <keyword_2> ...
-    ```
-- You can combine arguments:
-    ```sh
-    memoire -c <keyword_1> -t <keyword_2> ...
-    ```
-- By default, search results calculate the union of search results of each keyword. For intersection add `-i`:
-    ```sh
-    memoire [-i|--intersection] -c <keyword_1> -t <keyword_2> <keyword_3> ...
-    ```
-
 
 ### TUI
 ***
 - `Ctrl-c`: Quit program at any time.
-- `Up` / `Down`: To move between options or panels.
-- `Enter`: To select option.
-- `Ctrl-a`: To add new record.
-- `Left` / `Right`: To move cursor in input_mode.
+- `Ctrl-a`: To add new bookmark.
+- `Up` / `Down` / `Left` / `Right`: Move.
+- `Enter`: To select / submit.
+- `Esc`: To deselect / go back.
 
-
-### TLDR Pages Import
+## Memoire Collections
 ***
-Too lazy to build your own archive? No worries, you can import [tldr pages](https://github.com/tldr-pages/tldr) to Memoire.
+A personal collections of commands cheatsheets in `json` format compatible with `Memoire` can be found [here](https://github.com/Phoenix-Chen/memoire_collections)
 
-Following rules are applied when converting tldr-pages to Memoire bookmark:
-- Command name -> Tag
-- Example description -> Annotation
-- Command example -> Command
-
-You can import individual tldr page by passing file's path. E.g. to import [pages/common/aws](https://github.com/tldr-pages/tldr/blob/master/pages/common/aws.md) run:
+## Upgrade from below version 0.1.2
+***
+If you installed a `memoire` version below `0.1.2`. Run following script to move previous bookmarks into `default` collection:
 ```sh
-memoire --tldr pages/common/aws
+cat ~/.memoir_history.json | jq -s '.[0][] |= . + {"collection": "default"} | .[0]' > ~/.memoire/default.json
 ```
-
-
-## Requirement
-***
-This program use [rust-clipboard](https://github.com/aweinstock314/rust-clipboard) which requires x11 on Linux.
-
-## It's Not a Bug, It's a feature (aka Will fix)
-***
-1. In input mode the cursor moves out of border if text exceeds 1 line.
-
-## What's next
-***
-- Copy & paste in input mode.
-- Unit tests.
-- A system to share, update and manage json files. Or parse [existing command collection](https://github.com/tldr-pages/tldr) to json.
-- Alternative TUI libraries:
-    - [cursive](https://github.com/gyscos/cursive)
-    - [titik](https://github.com/ivanceras/titik)
-- Look into option to switch out InputDialog with existing dialog libraries:
-    - [dialoguer](https://docs.rs/dialoguer/0.7.1/dialoguer/)
-    - [dialog](https://docs.rs/dialog/0.3.0/dialog/)
-
-## Q & A
-***
-1. How to retrieve record id from CLI?
-
-    ¯\\_(ツ)_/¯
-2. Why are you handling errors like an amateur?
-
-    But I am an amateur...
 
 ## License
 ***
