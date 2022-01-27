@@ -291,7 +291,11 @@ fn dialog_inputs_to_bookmark(inputs: Vec<String>) -> Bookmark {
     Bookmark::new(
         &replace_special_chars(&inputs[0]), 
         &replace_special_chars(&inputs[1]),
-        &inputs[2].split(',').map(|s| replace_special_chars(s).trim().to_owned()).collect(),
+        &inputs[2].split(',').filter_map(|s| if "".eq(s.trim()) {
+            None
+        } else {
+            Some(replace_special_chars(s).trim().to_owned())
+        }).collect(),
         &replace_special_chars(&inputs[3])
     )
 }
