@@ -1,17 +1,12 @@
-extern crate clipboard;
-
-use crate::util;
-use crate::memoire;
-use crate::arg_parser;
-
 mod widget;
+mod event;
 
 use std::{
     io::{stdout, Stdout},
     sync::mpsc
 };
 
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 use termion::{
     event::Key,
     raw::{IntoRawMode, RawTerminal},
@@ -21,44 +16,45 @@ use termion::{
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
-    widgets::{Paragraph, Wrap},
+    style::{Color, Style},
+    widgets::{Paragraph, Wrap, Block, Borders},
     Terminal,
 };
 
-use arg_parser::ArgParser;
-use memoire::Memoire;
-use util::event::{Event, Events};
-use widget::{Action, WidgetManager, ACTIONS};
+use event::events;
+use widget::{
+    Action, WidgetManager, WidgetTrait, ACTIONS,
+    ACTION_LIST, INPUT_DIALOG, RESULT_TABLE, SEARCH_BAR
+};
+use crate::collection::{
+    bookmark::Bookmark,
+    jq,
+    util::{get_collection_dir_path, get_json_path},
+};
 
 
 pub struct Term {
     screen: Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>,
-    events: Events,
-    memoire: Memoire,
+    events: mpsc::Receiver<Key>,
     wm: WidgetManager,
-    arg_parser: ArgParser
 }
 
 
 impl Term {
-    pub fn new(memoire_history: &str) -> Term {
+    pub fn new() -> Term {
         Term {
             screen: Terminal::new(TermionBackend::new(AlternateScreen::from(
                 stdout().into_raw_mode().unwrap(),
             )))
             .unwrap(),
-            events: Events::new(),
-            memoire: Memoire::load_from(memoire_history),
+            events: events(),
             wm: WidgetManager::new(),
-            arg_parser: ArgParser::new()
         }
     }
 
-    /// Pass input into arg_parser then get the results from arg_parser and update result_table
-    pub fn process_input(&mut self, input: Vec<String>) {
-        self.arg_parser.matches_input(input);
-        self.wm
-            .update_result_table(self.arg_parser.get_results(&mut self.memoire));
+    // FIXME: Dislike this approach. consider using setter or set when initialize
+    pub fn get_mut_widget_manager(&mut self) -> &mut WidgetManager {
+        &mut self.wm
     }
 
     pub fn display(&mut self) -> Result<(), mpsc::RecvError> {
@@ -66,144 +62,130 @@ impl Term {
         loop {
             self.draw();
 
-            if let Event::Input(input) = self.events.next()? {
-                match input {
-                    Key::Ctrl('c') => break,  // Need to match exit_key in util::event for consistent behavior
-                    Key::Ctrl('a') => {
-                        if self.wm.get_cur_focus() != "input_dialog" {
-                            self.wm.reset_result_table_state();
-                            self.wm.set_input_dialog(vec![
-                                ("command".to_string(), "".to_string()),
-                                ("annotation".to_string(), "".to_string()),
-                                ("tags".to_string(), "".to_string()),
-                            ]);
-                            self.wm.set_cur_focus("input_dialog");
-                        }
+            match self.events.recv()? {
+                Key::Ctrl('c') => break,
+                Key::Ctrl('a') => {
+                    // NOTE: reset result table state, otherwise will edit instead of add
+                    self.wm.reset_result_table_state();
+                    if self.wm.get_cur_focus() != INPUT_DIALOG {
+                        self.wm.set_input_dialog_inputs(
+                            Bookmark::default().to_vec()
+                        );
+                        self.wm.set_cur_focus(INPUT_DIALOG);
                     }
-                    Key::Char('\n') => {
-                        match self.wm.get_cur_focus() {
-                            "action_list" => {
-                                match self.wm.get_action_list_state_selected() {
-                                    Some(action_index) => {
-                                        match ACTIONS[action_index] {
-                                            Action::Copy => {
-                                                let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-                                                ctx.set_contents(
-                                                    self.wm
-                                                        .get_selected_item_command()
-                                                        .to_owned(),
-                                                )
-                                                .unwrap();
-                                                break;
-                                            }
-                                            Action::Edit => {
-                                                self.update_input_dialog();
-                                                self.wm.set_cur_focus("input_dialog");
-                                            }
-                                            Action::Delete => {
-                                                match self.wm.get_selected_item_id() {
-                                                    Some(id) => {
-                                                        self.memoire.remove_bookmark(id);
-                                                        self.wm.update_result_table(self.memoire.all());
-                                                    },
-                                                    None => {}  // Add error log
-                                                }
-                                                self.wm.reset_action_list_state();
-                                                self.wm.reset_result_table_state();
-                                                self.wm.set_cur_focus("result_table");
-                                            }
-                                        }
+                }
+                Key::Char('\n') => {
+                    match self.wm.get_cur_focus() {
+                        ACTION_LIST => {
+                            if let Some(action_index) = self.wm.get_action_list_state_selected() {
+                                match ACTIONS[action_index] {
+                                    Action::Copy => {
+                                        let mut clipboard = Clipboard::new().unwrap();
+                                        clipboard.set_text(
+                                            self.wm
+                                                .get_selected_item_command()
+                                                .to_owned()
+                                        )
+                                        .unwrap();
+                                        break;
                                     }
-                                    None => {}
+                                    Action::Edit => {
+                                        self.wm.update_input_dialog_from_result_table();
+                                        self.wm.set_cur_focus(INPUT_DIALOG);
+                                    }
+                                    Action::Delete => {
+                                        match self.wm.get_selected_item_index() {
+                                            Some(index) => {
+                                                jq::delete(
+                                                    &get_json_path(self.wm.get_selected_item_collection()),
+                                                    index
+                                                );
+                                                self.wm.update_result_table(jq::search(
+                                                    &get_collection_dir_path(),
+                                                    &[self.wm.get_selected_item_collection()]
+                                                ))
+                                            },
+                                            None => {}  // Add error log
+                                        }
+                                        self.wm.reset_action_list_state();
+                                        self.wm.reset_result_table_state();
+                                        
+                                        self.wm.set_cur_focus(RESULT_TABLE);
+                                    }
                                 }
+                                
                             }
-                            "result_table" => match self.wm.get_result_table_state_selected() {
-                                Some(_) => {
-                                    self.wm.set_cur_focus("action_list");
-                                    self.wm.key_down();
-                                }
-                                None => {}
-                            },
-                            "input_dialog" => {
-                                let inputs = self.wm.get_input_dialog_inputs();
-                                let mut common_args: Vec<String> = Vec::new();
-                                for input in inputs.into_iter() {
-                                    // TODO: research extend_from_slice
-                                    common_args.append(
-                                        &mut vec![
-                                            format!("{}{}", "--", input.0),
-                                            input.1.to_owned()
-                                        ]
+                        }
+                        RESULT_TABLE => if self.wm.get_result_table().get_state().selected().is_some() {
+                            self.wm.set_cur_focus(ACTION_LIST);
+                        },
+                        INPUT_DIALOG => {
+                            let bookmark = dialog_inputs_to_bookmark(
+                                self.wm.get_input_dialog().get_inputs_as_strings()
+                            );
+                            match self.wm.get_selected_item_index() {
+                                Some(index) => {  // Edit
+                                    jq::delete(
+                                        &get_json_path(self.wm.get_selected_item_collection()),
+                                        index
+                                    );
+                                    jq::add(
+                                        &get_json_path(bookmark.get_collection()),
+                                        &bookmark,
+                                        Some(index)
+                                    );
+                                },
+                                None => {  // Add
+                                    jq::add(
+                                        &get_json_path(bookmark.get_collection()),
+                                        &bookmark,
+                                        None
                                     );
                                 }
-                                // Split tags
-                                let mut tags: Vec<String> = match common_args.pop() {
-                                    Some(tags_str) => {
-                                        tags_str.split(',').map(|tag| {
-                                            tag.trim().to_owned()
-                                        }).collect()
-                                    },
-                                    None => {
-                                        // Log error here
-                                        panic!("No inputs from input_dialog")
-                                    }
-                                };
-                                common_args.append(&mut tags);
-                                let new_args = match self.wm.get_selected_item_id() {
-                                    Some(id) => {  // Edit
-                                        let mut edit_args = vec![
-                                            "memoire".to_owned(),
-                                            "--edit".to_owned(),
-                                            "--id".to_owned(),
-                                            id.to_string()
-                                        ];
-                                        edit_args.append(&mut common_args);
-                                        edit_args
-                                    },
-                                    None => {  // Add
-                                        let mut add_args = vec![
-                                            "memoire".to_owned(),
-                                            "--add".to_owned()
-                                        ];
-                                        add_args.append(&mut common_args);
-                                        add_args
-                                    }
-                                };
-                                self.process_input(new_args);
-                                self.wm.reset_action_list_state();
-                                self.wm.set_cur_focus("result_table");
+                            };
+                            self.wm.reset_action_list_state();
+                            self.wm.reset_result_table_state();
+                            self.wm.update_result_table(
+                                // update this to search by only tag
+                                jq::search(
+                                    &get_collection_dir_path(),
+                                    &[bookmark.get_collection()]
+                                )
+                            );
+                            self.wm.set_cur_focus(RESULT_TABLE);
+                        },
+                        SEARCH_BAR => {
+                            if self.wm.get_result_table().get_state().selected().is_none() {
+                                self.wm.key_down();
+                            } else {
+                                self.wm.set_cur_focus(RESULT_TABLE);
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
-                    Key::Char('\t') => {
-                        // Overwrite tab behavior in input mode
-                        if self.wm.get_cur_focus() == "input_dialog" {
-                            self.wm.update_input_dialog_input(' ');
-                        }
-                    }
-                    Key::Char(character) => {
-                        if self.wm.get_cur_focus() == "input_dialog" {
-                            self.wm.update_input_dialog_input(character);
-                        }
-                    }
-                    Key::Up => {
-                        self.wm.key_up();
-                    }
-                    Key::Down => {
-                        self.wm.key_down();
-                    }
-                    Key::Left => {
-                        self.wm.key_left();
-                    }
-                    Key::Right => {
-                        self.wm.key_right();
-                    }
-                    Key::Backspace => {
-                        self.wm.key_backspace();
-                    }
-                    _ => {}
                 }
+                Key::Char(character) => {
+                    self.wm.key_char(character);
+                }
+                Key::Up => {
+                    self.wm.key_up();
+                }
+                Key::Down => {
+                    self.wm.key_down();
+                }
+                Key::Left => {
+                    self.wm.key_left();
+                }
+                Key::Right => {
+                    self.wm.key_right();
+                }
+                Key::Backspace => {
+                    self.wm.key_backspace();
+                }
+                Key::Esc => {
+                    self.wm.key_esc();
+                }
+                _ => {}
             }
         }
 
@@ -213,23 +195,26 @@ impl Term {
     fn draw(&mut self) {
         let cur_focus = self.wm.get_cur_focus();
         // For render input dialog
-        let input_size = self.wm.get_input_dialog_input_size();
-        let paragraphs = self.wm.get_input_dialog_widgets();
-        let input_dialog_cur_input_ind = self.wm.get_input_dialog_cur_input_ind();
-        let input_dialog_cursor = self.wm.get_input_dialog_cursor() as u16;
+        let num_of_inputs = self.wm.get_input_dialog().get_inputs_size();
+        let input_titles = self.wm.get_input_dialog().get_inputs_names();
+        let cur_focus_input = self.wm.get_input_dialog().get_cur_input_ind();
+        let paragraphs = self.wm.get_input_dialog().get_widgets();
         // For render
-        let result_table_widget = self.wm.get_result_table_widget();
-        let result_table_state = self.wm.get_result_table_state();
+        let search_bar = self.wm.get_search_bar().get_widget().block(
+            Block::default().borders(Borders::ALL)
+        );
+        let result_table_widget = self.wm.get_result_table().get_widget();
+        let result_table_state = self.wm.get_result_table().get_state();
         let display_panel_widget = self.wm.get_display_panel_widget();
-        let action_list_widget = self.wm.get_action_list_widget();
-        let action_list_state = self.wm.get_action_list_state();
+        let action_list_widget = self.wm.get_action_list().get_widget();
+        let action_list_state = self.wm.get_action_list().get_state();
         self.screen.draw(
             |f| {
-                if cur_focus == "input_dialog" {
+                if cur_focus == INPUT_DIALOG {
                     let mut constraints: Vec<Constraint> = Vec::new();
-                    for _ in 0..input_size {
+                    for _ in 0..num_of_inputs {
                         constraints.push(
-                            Constraint::Ratio(1, input_size as u32)
+                            Constraint::Ratio(1, num_of_inputs as u32)
                         );
                     }
                     let outer_layout = Layout::default()
@@ -242,7 +227,9 @@ impl Term {
                         )
                         .split(f.size());
                     f.render_widget(
-                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor and ENTER to submit").wrap(Wrap { trim: true }),
+                        Paragraph::new("Press UP/DOWN to move between dialogs, LEFT/RIGHT to move cursor, ENTER to submit and ESC to go back.")
+                            .style(Style::default().fg(Color::LightBlue))
+                            .wrap(Wrap { trim: true, break_word: true }),
                         outer_layout[0]
                     );
                     let inner_layout = Layout::default()
@@ -252,27 +239,33 @@ impl Term {
 
                     for (i, paragraph) in paragraphs.into_iter().enumerate() {
                         f.render_widget(
-                            paragraph, inner_layout[i]
+                            paragraph.block(
+                                Block::default().title(
+                                    input_titles[i].to_owned()
+                                ).borders(Borders::ALL)
+                            ).style(
+                                // FIXME: Must be a cleaner way
+                                if let Some(cur_input_index) = cur_focus_input {
+                                    if i == cur_input_index {
+                                        Style::default().fg(Color::LightYellow)
+                                    } else {
+                                        Style::default().fg(Color::White)
+                                    }
+                                } else {
+                                    Style::default().fg(Color::White)
+                                }
+                            ).wrap(Wrap { trim: false, break_word: true }),
+                            inner_layout[i]
                         );
-                        match input_dialog_cur_input_ind {
-                            Some(i) => {
-                                // FIXME: calc (cursor_length)/(screen_width - 2)
-                                f.set_cursor(
-                                    inner_layout[i].x + input_dialog_cursor + 1,
-                                    inner_layout[i].y + 1
-                                );
-                            },
-                            None => {}
-                        }
                     }
                 } else {
                     // The most outer top and bottom rectangles
                     let windows_layout = Layout::default()
                         .direction(Direction::Vertical)
                         .constraints([
-                            Constraint::Percentage(70),
-                            Constraint::Percentage(30)
-                            // Constraint::Min(4)
+                            Constraint::Min(3),
+                            Constraint::Percentage(60),
+                            Constraint::Percentage(40)
                         ].as_ref())
                         .split(f.size());
 
@@ -282,19 +275,31 @@ impl Term {
                             Constraint::Percentage(90),
                             Constraint::Percentage(10)
                         ].as_ref())
-                        .split(windows_layout[1]);
+                        .split(windows_layout[2]);
 
-                    f.render_stateful_widget(result_table_widget, windows_layout[0], &mut result_table_state.clone());
+                    f.render_widget(search_bar, windows_layout[0]);
+                    f.render_stateful_widget(result_table_widget, windows_layout[1], &mut result_table_state.clone());
                     f.render_widget(display_panel_widget, windows_layout2[0]);
                     f.render_stateful_widget(action_list_widget, windows_layout2[1], &mut action_list_state.clone());
                 }
             }
         ).unwrap();
     }
+}
 
-    /// Update input_dialog from the current chosen bookmark in result_table
-    fn update_input_dialog(&mut self) {
-        let inputs = self.wm.get_selected_item_as_tuple();
-        self.wm.set_input_dialog(inputs);
-    }
+fn dialog_inputs_to_bookmark(inputs: Vec<String>) -> Bookmark {
+    Bookmark::new(
+        &replace_special_chars(&inputs[0]), 
+        &replace_special_chars(&inputs[1]),
+        &inputs[2].split(',').filter_map(|s| if "".eq(s.trim()) {
+            None
+        } else {
+            Some(replace_special_chars(s).trim().to_owned())
+        }).collect(),
+        &replace_special_chars(&inputs[3])
+    )
+}
+
+fn replace_special_chars(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
 }
