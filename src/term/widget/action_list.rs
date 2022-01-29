@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result, Debug};
 
-use tui::{
+use crate::tui::{
     layout::Corner,
     style::{Color, Modifier, Style},
     text::Span,

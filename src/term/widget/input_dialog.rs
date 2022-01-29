@@ -1,4 +1,4 @@
-use tui::{
+use crate::tui::{
     style::{Color, Style},
     text::{Span, Spans},
     widgets::Paragraph,

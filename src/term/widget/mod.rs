@@ -5,7 +5,7 @@ mod widget_trait;
 
 use std::collections::HashMap;
 
-use tui::{
+use crate::tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Wrap}

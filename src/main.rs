@@ -1,5 +1,6 @@
 mod term;
 mod collection;
+mod tui;
 
 use std::{env, path::Path, process::{Command, Stdio, exit}};
 use clap::{Arg, App, SubCommand};

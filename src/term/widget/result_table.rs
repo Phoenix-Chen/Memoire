@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use tui::{
+use crate::tui::{
     layout::Constraint,
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Row, Table, TableState}

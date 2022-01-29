@@ -13,7 +13,7 @@ use termion::{
     screen::AlternateScreen
 };
 
-use tui::{
+use crate::tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
