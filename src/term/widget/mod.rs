@@ -1,4 +1,5 @@
 mod action_list;
+mod display_panel;
 mod input_dialog;
 mod result_table;
 mod widget_trait;
@@ -15,6 +16,7 @@ use crate::collection::bookmark::Bookmark;
 use crate::collection::jq::{SearchResult, search};
 use crate::collection::util::get_collection_dir_path;
 use action_list::ActionList;
+use display_panel::DisplayPanel;
 use input_dialog::{Input, InputGroup};
 use result_table::ResultTable;
 pub use action_list::Action;
@@ -24,6 +26,7 @@ pub use widget_trait::WidgetTrait;
 
 enum Widget {
     ActionList(ActionList),
+    DisplayPanel(DisplayPanel),
     ResultTable(ResultTable),
     SearchBar(Input),
     InputDialog(InputGroup)
@@ -36,7 +39,8 @@ impl WidgetTrait for Widget {
             Widget::ActionList(action_list) => action_list.on_focus(),
             Widget::InputDialog(input_dialog) => input_dialog.on_focus(),
             Widget::ResultTable(result_table) => result_table.on_focus(),
-            Widget::SearchBar(input) => input.on_focus()
+            Widget::SearchBar(input) => input.on_focus(),
+            _ => {}
         }
     }
 
@@ -45,7 +49,8 @@ impl WidgetTrait for Widget {
             Widget::ActionList(action_list) => action_list.on_blur(),
             Widget::InputDialog(input_dialog) => input_dialog.on_blur(),
             Widget::ResultTable(result_table) => result_table.on_blur(),
-            Widget::SearchBar(input) => input.on_blur()
+            Widget::SearchBar(input) => input.on_blur(),
+            _ => {}
         }
     }
 }
@@ -58,6 +63,7 @@ pub struct WidgetManager {
 
 
 pub const ACTION_LIST: &str = "action_list";
+pub const DISPLAY_PANEL: &str = "display_panel";
 pub const INPUT_DIALOG: &str = "input_dialog";
 pub const RESULT_TABLE: &str = "result_table";
 pub const SEARCH_BAR: &str = "search_bar";
@@ -87,7 +93,8 @@ impl WidgetTrait for WidgetManager {
             Widget::SearchBar(_) => {
                 self.set_cur_focus(RESULT_TABLE);
                 self.key_up();
-            }
+            },
+            _ => {}
         }
     }
 
@@ -99,7 +106,8 @@ impl WidgetTrait for WidgetManager {
             Widget::SearchBar(_) => {
                 self.set_cur_focus(RESULT_TABLE);
                 self.key_down();
-            }
+            },
+            _ => {}
         }
     }
 
@@ -195,6 +203,24 @@ impl WidgetManager {
             )
         );
         widgets.insert(RESULT_TABLE.to_string(), Widget::ResultTable(ResultTable::default()));
+        widgets.insert(
+            DISPLAY_PANEL.to_string(),
+            Widget::DisplayPanel(
+                DisplayPanel::new(
+                    vec![
+                        Spans::from(vec![Span::styled("Hints*", Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))]),
+                        Spans::from(vec![
+                            Span::styled("Ctrl-c", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
+                            Span::styled(" to quit anytime", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
+                        ]),
+                        Spans::from(vec![
+                            Span::styled("Ctrl-a", Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)),
+                            Span::styled(" to add", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
+                        ])
+                    ]
+                )
+            )
+        );
         WidgetManager {
             widgets,
             cur_focus: RESULT_TABLE.to_string()
@@ -319,32 +345,28 @@ impl WidgetManager {
         self.get_mut_input_dialog().set_inputs(inputs);
     }
 
-    pub fn get_display_panel_widget(&self) -> Paragraph {
-        let display_panel: Paragraph = match self.get_result_table().get_state().selected() {
-            Some(result_table_state) => {
-                let result_table = self.get_result_table();
-                Paragraph::new(
-                    bookmark_to_spans(
-                        result_table.get_item(result_table_state).get_bookmark()
-                    )
-                )
+    fn get_display_panel(&self) -> &DisplayPanel {
+        match self.widgets.get(DISPLAY_PANEL).unwrap() {
+            Widget::DisplayPanel(display_panel) => {
+                display_panel
             },
-            None => {
-                Paragraph::new(
-                    vec![
-                        Spans::from(vec![Span::styled("Hints*", Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD))]),
-                        Spans::from(vec![
-                            Span::styled("Ctrl-c", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
-                            Span::styled(" to quit anytime", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
-                        ]),
-                        Spans::from(vec![
-                            Span::styled("Ctrl-a", Style::default().fg(Color::LightMagenta).add_modifier(Modifier::BOLD)),
-                            Span::styled(" to add", Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD))
-                        ])
-                    ]
-                )
+            _ => {
+                panic!("No display_panel in self.widgets!!!")
             }
-        };
+        }
+    }
+
+    pub fn get_display_panel_widget(&self) -> Paragraph {
+        let display_panel: Paragraph = self.get_display_panel().get_widget(
+            match self.get_result_table().get_state().selected() {
+                Some(result_table_state) => Some(
+                    bookmark_to_spans(
+                        self.get_result_table().get_item(result_table_state).get_bookmark()
+                    )
+                ),
+                None => None
+            }
+        );
         display_panel.block(Block::default().borders(Borders::ALL)).wrap(Wrap { trim: true, break_word: false })
     }
 
